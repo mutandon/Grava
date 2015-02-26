@@ -24,12 +24,7 @@ import java.util.concurrent.ExecutionException;
  * Represents a multigraph as a mean of standard operations
  * @author Davide Mottin <mottin@disi.unitn.eu>
  */
-<<<<<<< HEAD
 public interface Multigraph extends Iterable<Long> {  
-=======
-public interface Multigraph extends Iterable<Long> {
-
->>>>>>> FETCH_HEAD
     /**
      * Add a vertex in the graph. This must be called on source and destination
      * node before the {@link #addEdge(java.lang.Long, java.lang.Long, java.lang.Long) }
@@ -37,29 +32,28 @@ public interface Multigraph extends Iterable<Long> {
      * @param id The id of the node to be inserted
      * @throws NullPointerException if the input vertex is null
      */
-    public void addVertex(Long id) throws NullPointerException;
+    public void addVertex(Long id) throws NullPointerException;    
     /**
-     * Add an edge to the graph, if both source and destination exists. To add a vertex,
-     * calls {@link #addVertex(java.lang.Long) } before.
+     * Add an edge to the graph, if both source and destination exists. To add a vertex, 
+     * calls {@link #addVertex(java.lang.Long) } before. 
      * If both source and dest do not exist throws an {@link IllegalArgumentException}
      * @param src The source node in this directed multigraph
      * @param dest The dest node in this directed multigraph
      * @param label The label of the edge to be created
-     * @throws IllegalArgumentException If src and edges are not present in the
+     * @throws IllegalArgumentException If src and edges are not present in the 
      * vertex collection
-     * @throws NullPointerException if one of the input is null
+     * @throws NullPointerException if one of the input is null 
      */
-    public void addEdge(Long src, Long dest, Long label) throws IllegalArgumentException, NullPointerException;
+    public void addEdge(Long src, Long dest, Long label) throws IllegalArgumentException, NullPointerException;    
     /**
-     * Add an edge to the graph, if both source and destination exists. To add a vertex,
-     * calls {@link #addVertex(java.lang.Long) } before.
+     * Add an edge to the graph, if both source and destination exists. To add a vertex, 
+     * calls {@link #addVertex(java.lang.Long) } before. 
      * If both source and dest do not exist throws an {@link IllegalArgumentException}
      * @param edge The edge to be added into the graph
-     * @throws IllegalArgumentException If src and edges are not present in the
+     * @throws IllegalArgumentException If src and edges are not present in the 
      * vertex collection
      * @throws NullPointerException if the input edge is null
      */
-<<<<<<< HEAD
     public void addEdge(Edge edge) throws IllegalArgumentException, NullPointerException;    
     /**
      * Remove a vertex in the graph and its connected edges.
@@ -89,29 +83,18 @@ public interface Multigraph extends Iterable<Long> {
      * @throws NullPointerException if the input edge is null
      */
     public void removeEdge(Edge edge) throws IllegalArgumentException, NullPointerException;    
-=======
-    public void addEdge(Edge edge) throws IllegalArgumentException, NullPointerException;
-
->>>>>>> FETCH_HEAD
     /**
      * Returns the set of vertices of the graph
      * @return The set of vertices
      */
     public Collection<Long> vertexSet();
-
-    /**
-     * Returns The number of vertices
-     * @return The number of vertices
-     */
-    public int numberOfNodes();
-
-
+    
     /**
      * Returns the set of edges of the graph
      * @return The set of edges
      */
     public Collection<Edge> edgeSet();
-
+    
     /**
      * Returns the "in degree" of the specified vertex. An in degree of a
      * vertex in a directed graph is the number of incoming directed edges from
@@ -134,7 +117,7 @@ public interface Multigraph extends Iterable<Long> {
      * @throws NullPointerException if the input vertex is null
      */
     public Collection<Edge> incomingEdgesOf(Long vertex) throws NullPointerException;
-
+    
     /**
      * Returns the "out degree" of the specified vertex. An out degree of a
      * vertex in a directed graph is the number of outward directed edges from
@@ -144,10 +127,10 @@ public interface Multigraph extends Iterable<Long> {
      * @param vertex vertex whose degree is to be calculated.
      *
      * @return the degree of the specified vertex.
-     *
+     * 
      */
     public int outDegreeOf(Long vertex) throws NullPointerException;
-
+    
     /**
      * Returns a set of all edges outgoing from the specified vertex.
      *
@@ -156,18 +139,18 @@ public interface Multigraph extends Iterable<Long> {
      * @return a set of all edges outgoing from the specified vertex.
      * @throws NullPointerException if the input vertex is null
      */
-    public Collection<Edge> outgoingEdgesOf(Long vertex) throws NullPointerException;
-
+    public Collection<Edge> outgoingEdgesOf(Long vertex) throws NullPointerException;    
+    
     /**
-     * Merge this graph with the input graph. Parallelize the operations only if
+     * Merge this graph with the input graph. Parallelize the operations only if 
      * needed otherwise go recursively
      * @param graph The input graph to be merged to this
      * @return this graph
      * @throws NullPointerException if the input graph is null
      * @throws ExecutionException if something happens in the merge phase
      */
-    public BaseMultigraph merge(BaseMultigraph graph) throws NullPointerException, ExecutionException;
-
+    public BaseMultigraph merge(BaseMultigraph graph) throws NullPointerException, ExecutionException;    
+    
     /**
      * Check if the input vertex is contained in the Multigraph
      * @param vertex The input vertex to be checked
