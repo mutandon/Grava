@@ -50,11 +50,15 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
     private int nodeNumber;
     private Set<Edge> edgeSet;
     //TODO: Use this
+<<<<<<< HEAD
     //private int numEdges; 
+=======
+    private int numEdges;
+>>>>>>> FETCH_HEAD
 
     public BigMultigraph() {
     }
-    
+
     /**
      * Takes in input the graph ordered by source and by dest to have a faster
      * computation
@@ -71,21 +75,21 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
         lastInBounds = new int[2];
         lastOutBounds = new int[2];
         edgeSet = null;
-        
+
         if (edges == -1) {
             edges = Utilities.countLines(inFile);
         }
 
-        //TODO: Add a check on different sizes. 
+        //TODO: Add a check on different sizes.
         inEdges = new long[edges][];
         outEdges = new long[edges][];
         loadEdges(inFile, true);
         loadEdges(outFile, false);
     }
-    
+
     public BigMultigraph(String inFile, String outFile) throws ParseException, IOException {
         this(inFile, outFile, -1);
-    } 
+    }
 
     private void loadEdges(String edgeFile, boolean incoming) throws ParseException, IOException {
         try {
@@ -99,6 +103,22 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
             String line;
             String[] tokens;
             int count = 0;
+<<<<<<< HEAD
+=======
+//            int index;
+//            line = in.readLine();
+//            if (line != null) {
+//                line = line.trim();
+//                if (edges == -1) {
+//                    if (line.startsWith("#") && (index = line.indexOf("edges:")) != -1) {
+//                        int i;
+//                        for (i = index + 6; Character.isDigit(line.charAt(i)) && i < line.length(); i++);
+//                        edges = Integer.parseInt(line.substring(index + 6, i));
+//                    } else {
+//                        edges = Utilities.countLines(edgeFile);
+//                    }
+//                }
+>>>>>>> FETCH_HEAD
             while((line = in.readLine()) != null) {
                 line = line.trim();
                 if (!"".equals(line) && !line.startsWith("#")) { //Comment
@@ -117,8 +137,8 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
                     } else {
                         outEdges[count] = new long[]{source, dest, label};
                     }
-                    
-                } 
+
+                }
                 count++;
                 if (count % 50000000 == 0) {
                     System.out.printf("Processed %d lines of %s\n", count, edgeFile);
@@ -145,8 +165,8 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
     public void addEdge(Edge edge) throws IllegalArgumentException, NullPointerException {
         throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed.");
     }
-    
-    
+
+
     public void setEdges(long[][] inEdges, long[][] outEdges) {
         lastInVertex = -1;
         lastOutVertex = -1;
@@ -170,6 +190,7 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
         return verteces;
     }
 
+    @Override
     public int numberOfNodes() {
         if (nodeNumber == -1) {
             nodeNumber = 0;
@@ -247,7 +268,7 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
      * @param vertex The vertex to find the outgoing edges
      * @return An array of source,dest,label arrays
      */
-    
+
     public long[][] outgoingArrayEdgesOf(long vertex) {
         long[][] edges = edgesOf(outEdges, lastOutBounds, vertex, lastOutVertex);
         lastOutVertex = vertex;
@@ -292,14 +313,14 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
             bounds[1] = -1;
         }
     }
-    
-    
+
+
     @Override
     public BaseMultigraph merge(BaseMultigraph graph) throws NullPointerException, ExecutionException {
         throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed.");
     }
 
-    //TODO: Implement this. 
+    //TODO: Implement this.
     @Override
     public boolean containsVertex(Long vertex) throws NullPointerException {
         return Utilities.binaryTableSearch(inEdges, vertex) >= 0 || Utilities.binaryTableSearch(outEdges, vertex) >= 0;

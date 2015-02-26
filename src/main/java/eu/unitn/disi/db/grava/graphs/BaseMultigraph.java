@@ -31,50 +31,68 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * This class represents a multigraph that is a structure that holds a set of 
+ * This class represents a multigraph that is a structure that holds a set of
  * vertices and labeled edges
+ * 
  * @author Davide Mottin <mottin@disi.unitn.eu>
  */
 public class BaseMultigraph implements Multigraph {
     private static final int MIN_SIZE_PARALLELIZATION = 2000;
-    
+
     protected Map<Long, EdgeContainer> nodeEdges;
     protected Collection<Edge> edges;
     protected boolean allowRepetitions;
     private int edgeSize;
-    
+
     private static final int DEFAULT_CAPACITY = 16;
     private static final float DEFAULT_DEGREE = 1f;
-    
+
     /**
-     * Construct a multigraph that does not allow repetitions and has an initial 
+     * Construct a multigraph that does not allow repetitions and has an initial
      * capacity of 2
      */
     public BaseMultigraph() {
         this(DEFAULT_CAPACITY, DEFAULT_DEGREE);
     }
-    
+
     public BaseMultigraph(int capacity) {
         this(capacity, DEFAULT_DEGREE);
     }
 
     /**
-     * Construct a multigraph specifying an initial capacity and the 
+     * Construct a multigraph specifying an initial capacity and the
      * allowRepetitions flag. If the repetitions are allowed the vertices are stored
-     * in a {@link List} to speed up performances, otherwise in a {@link Set} to 
+     * in a {@link List} to speed up performances, otherwise in a {@link Set} to
      * ensure the correcteness.
+<<<<<<< HEAD
      * 
      * @param initialCapacity The initial capacity of the store (speed up). 
+=======
+     *
+     * @param allowRepetititions If true use an {@link ArrayList} instead of a {@link HashSet}
+     * @param initialCapacity The initial capacity of the store (speed up).
+>>>>>>> FETCH_HEAD
      * @param avgDegree The average degree of each node
      */
     public BaseMultigraph(int initialCapacity, float avgDegree) {
         this.edgeSize = (int)Math.ceil(avgDegree);
+<<<<<<< HEAD
         
         nodeEdges = new HashMap<>(initialCapacity);
         edges = new HashSet<>((int)Math.ceil(initialCapacity * avgDegree));
+=======
+
+//        if (this.allowRepetitions) {
+//            vertices = new ArrayList<Long>(initialCapacity);
+//        } else {
+//            vertices = new HashSet<Long>(initialCapacity);
+//        }
+        nodeEdges = new HashMap<>(initialCapacity);
+        edges = new ArrayList<>((int)Math.ceil(initialCapacity * avgDegree));
+>>>>>>> FETCH_HEAD
     }
-    
-        
+
+
     /**
      * Add a vertex in the graph. This must be called on source and destination
      * node before the {@link #addEdge(java.lang.Long, java.lang.Long, java.lang.Long) }
@@ -87,15 +105,15 @@ public class BaseMultigraph implements Multigraph {
             nodeEdges.put(id, buildEdgeContainer());
         }
     }
-    
+
     /**
-     * Add an edge to the graph, if both source and destination exists. To add a vertex, 
-     * calls {@link #addVertex(java.lang.Long) } before. 
+     * Add an edge to the graph, if both source and destination exists. To add a vertex,
+     * calls {@link #addVertex(java.lang.Long) } before.
      * If both source and dest do not exist throws an {@link IllegalArgumentException}
      * @param src The source node in this directed multigraph
      * @param dest The dest node in this directed multigraph
      * @param label The label of the edge to be created
-     * @throws IllegalArgumentException If src and edges are not present in the 
+     * @throws IllegalArgumentException If src and edges are not present in the
      * vertex collection
      */
     @Override
@@ -103,35 +121,35 @@ public class BaseMultigraph implements Multigraph {
     {
         EdgeContainer srcC = nodeEdges.get(src);
         EdgeContainer dstC = nodeEdges.get(dest);
-        
+
         Edge e = new Edge(src, dest, label);
-        
+
         if (srcC == null) {
             throw new IllegalArgumentException("Source node is not in the vertex list. Call addVertex before");
         }
         if (dstC == null) {
             throw new IllegalArgumentException("Destination node is not in the vertex list. Call addVertex before");
         }
-        
+
         if (srcC.addOutgoingEdge(e)) {
             edges.add(e);
             dstC.addIncomingEdge(e);
         }
     }
-    
+
     /**
-     * Add an edge to the graph, if both source and destination exists. To add a vertex, 
-     * calls {@link #addVertex(java.lang.Long) } before. 
+     * Add an edge to the graph, if both source and destination exists. To add a vertex,
+     * calls {@link #addVertex(java.lang.Long) } before.
      * If both source and dest do not exist throws an {@link IllegalArgumentException}
      * @param edge The edge to be added into the graph
-     * @throws IllegalArgumentException If src and edges are not present in the 
+     * @throws IllegalArgumentException If src and edges are not present in the
      * vertex collection
      */
     @Override
     public void addEdge(Edge edge) throws NullPointerException {
         addEdge(edge.getSource(), edge.getDestination(), edge.getLabel());
     }
-    
+
     /**
      * Returns the set of vertices of the graph
      * @return The set of vertices
@@ -149,7 +167,7 @@ public class BaseMultigraph implements Multigraph {
     public Collection<Edge> edgeSet() {
         return edges;
     }
-    
+
     /**
      * Returns the "in degree" of the specified vertex. An in degree of a
      * vertex in a directed graph is the number of incoming directed edges from
@@ -186,7 +204,7 @@ public class BaseMultigraph implements Multigraph {
      *
      * @param vertex vertex whose degree is to be calculated.
      *
-     * @return the degree of the specified vertex.  
+     * @return the degree of the specified vertex.
      * @throws NullPointerException if the input vertex is null
      */
     @Override
@@ -207,9 +225,9 @@ public class BaseMultigraph implements Multigraph {
     public Collection<Edge> outgoingEdgesOf(Long vertex) throws NullPointerException {
         return nodeEdges.containsKey(vertex)? nodeEdges.get(vertex).getOutgoing() : null;
     }
-    
+
     /**
-     * Merge this graph with the input graph. Parallelize the operations only if 
+     * Merge this graph with the input graph. Parallelize the operations only if
      * needed otherwise go recursively
      * @param graph The input graph to be merged to this
      * @return this graph
@@ -217,9 +235,9 @@ public class BaseMultigraph implements Multigraph {
      * @throws ExecutionException if something happens in the merge phase
      */
     @Override
-    public BaseMultigraph merge(BaseMultigraph graph) 
-            throws ExecutionException, 
-                   NullPointerException 
+    public BaseMultigraph merge(BaseMultigraph graph)
+            throws ExecutionException,
+                   NullPointerException
     {
         if (nodeEdges.keySet().size() > MIN_SIZE_PARALLELIZATION) {
             ExecutorService pool = Executors.newFixedThreadPool(3);
@@ -254,8 +272,8 @@ public class BaseMultigraph implements Multigraph {
         }
         return this;
     }
-    
-    
+
+
     /**
      * Check if the input vertex is contained in the Multigraph
      * @param vertex The input vertex to be checked
@@ -277,6 +295,7 @@ public class BaseMultigraph implements Multigraph {
     }
 
     @Override
+<<<<<<< HEAD
     public void removeVertex(Long id) throws NullPointerException {
         EdgeContainer container = nodeEdges.remove(id);
         for (Edge edge : container.getIncoming()) {
@@ -299,32 +318,38 @@ public class BaseMultigraph implements Multigraph {
         nodeEdges.get(edge.getDestination()).getIncoming().remove(edge);
     }
     
+=======
+    public int numberOfNodes() {
+        return nodeEdges.size();
+    }
+
+>>>>>>> FETCH_HEAD
     /*
-     * Represents a container for the two set of edges (this prevents us to 
+     * Represents a container for the two set of edges (this prevents us to
      * use two different maps in the class)
      */
     protected class BaseEdgeContainer implements EdgeContainer {
-        protected Collection<Edge> incoming; 
+        protected Collection<Edge> incoming;
         protected Collection<Edge> outgoing;
-        
+
         public BaseEdgeContainer() {
             if (allowRepetitions) {
-                incoming = new ArrayList<Edge>(edgeSize);
-                outgoing = new ArrayList<Edge>(edgeSize);
+                incoming = new ArrayList<>(edgeSize);
+                outgoing = new ArrayList<>(edgeSize);
             } else {
-                incoming = new HashSet<Edge>(edgeSize);
-                outgoing = new HashSet<Edge>(edgeSize);
+                incoming = new HashSet<>(edgeSize);
+                outgoing = new HashSet<>(edgeSize);
             }
         }
-        
+
         @Override
         public boolean addOutgoingEdge(Edge e) {
             return outgoing.add(e);
         }
-        
+
         @Override
         public boolean addIncomingEdge(Edge e) {
-            return incoming.add(e);            
+            return incoming.add(e);
         }
 
         @Override
@@ -337,29 +362,29 @@ public class BaseMultigraph implements Multigraph {
             return outgoing;
         }
     }
-    
+
     /*
      * Classes used to parallelize the merge process and, hopefully, to
      * have better results
      */
     private class AddToCollection implements Runnable {
-        private Collection coll; 
-        private BaseMultigraph graph;
+        private final Collection coll;
+        private final BaseMultigraph graph;
 
         public AddToCollection(Collection coll, BaseMultigraph graph) {
             this.coll = coll;
             this.graph = graph;
             //this.isVertex = isVertex;
         }
-        
+
         @Override
         public void run() {
             coll.addAll(graph.edges);
         }
     }
-    
+
     private class AddToMap implements Runnable {
-        private BaseMultigraph graph;
+        private final BaseMultigraph graph;
 
         public AddToMap(BaseMultigraph graph) {
             this.graph = graph;
@@ -382,4 +407,4 @@ public class BaseMultigraph implements Multigraph {
             }
         }
     }
-}   
+}
