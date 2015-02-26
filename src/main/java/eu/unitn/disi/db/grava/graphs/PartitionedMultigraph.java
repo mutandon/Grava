@@ -50,17 +50,15 @@ public final class PartitionedMultigraph extends BaseMultigraph {
      * in a {@link List} to speed up performances, otherwise in a {@link Set} to 
      * ensure the correcteness.
      * 
-     * @param allowRepetititions If true use an {@link ArrayList} instead of a {@link HashSet}
      * @param initialCapacity The initial capacity of the graph
      * @param nodePartitions The number of partitions in the node set
      * @param edgePartitions The number of partitions in the edge set
      */
-    public PartitionedMultigraph(boolean allowRepetitions, int initialCapacity, int nodePartitions, int edgePartitions) {
-        this.allowRepetitions = allowRepetitions;
+    public PartitionedMultigraph(int initialCapacity, int nodePartitions, int edgePartitions) {
         this.nodePartitions = nodePartitions;
         
-        nodeEdges = new PartitionedMap<Long, EdgeContainer>(initialCapacity, DEFAULT_LOAD_FACTOR, nodePartitions);
-        edges = new PartitionedList<Edge>(initialCapacity, edgePartitions);
+        nodeEdges = new PartitionedMap<>(initialCapacity, DEFAULT_LOAD_FACTOR, nodePartitions);
+        edges = new PartitionedList<>(initialCapacity, edgePartitions);
     }
 
     /**
@@ -74,8 +72,8 @@ public final class PartitionedMultigraph extends BaseMultigraph {
      * 
      * @param nodeDegreeFile The file with the degrees for each node. 
      */
-    public PartitionedMultigraph(String nodeDegreeFile, boolean allowRepetitions, int initialCapacity, int nodePartitions, int edgePartitions) throws IOException, ParseException {
-        this(allowRepetitions, initialCapacity, nodePartitions, edgePartitions);
+    public PartitionedMultigraph(String nodeDegreeFile, int initialCapacity, int nodePartitions, int edgePartitions) throws IOException, ParseException {
+        this(initialCapacity, nodePartitions, edgePartitions);
         
         try {
             File file = new File(nodeDegreeFile);
@@ -128,11 +126,11 @@ public final class PartitionedMultigraph extends BaseMultigraph {
     protected class EdgePartitionedContainer extends BaseEdgeContainer {
         public EdgePartitionedContainer(int inNum, int outNum) {
             if (allowRepetitions) {
-                incoming = new ArrayList<Edge>(inNum);
-                outgoing = new ArrayList<Edge>(outNum);
+                incoming = new ArrayList<>(inNum);
+                outgoing = new ArrayList<>(outNum);
             } else {
-                incoming = new HashSet<Edge>(inNum);
-                outgoing = new HashSet<Edge>(outNum);                
+                incoming = new HashSet<>(inNum);
+                outgoing = new HashSet<>(outNum);                
             }
         }
         

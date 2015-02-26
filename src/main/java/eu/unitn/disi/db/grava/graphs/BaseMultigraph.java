@@ -39,7 +39,7 @@ public class BaseMultigraph implements Multigraph {
     private static final int MIN_SIZE_PARALLELIZATION = 2000;
     
     protected Map<Long, EdgeContainer> nodeEdges;
-    protected List<Edge> edges;
+    protected Collection<Edge> edges;
     protected boolean allowRepetitions;
     private int edgeSize;
     
@@ -51,15 +51,11 @@ public class BaseMultigraph implements Multigraph {
      * capacity of 2
      */
     public BaseMultigraph() {
-        this(false, DEFAULT_CAPACITY, DEFAULT_DEGREE);
-    }
-
-    public BaseMultigraph(boolean haveRepetitions) {
-        this(haveRepetitions, DEFAULT_CAPACITY, DEFAULT_DEGREE);
+        this(DEFAULT_CAPACITY, DEFAULT_DEGREE);
     }
     
     public BaseMultigraph(int capacity) {
-        this(false, capacity, DEFAULT_DEGREE);
+        this(capacity, DEFAULT_DEGREE);
     }
 
     /**
@@ -68,21 +64,14 @@ public class BaseMultigraph implements Multigraph {
      * in a {@link List} to speed up performances, otherwise in a {@link Set} to 
      * ensure the correcteness.
      * 
-     * @param allowRepetititions If true use an {@link ArrayList} instead of a {@link HashSet}
      * @param initialCapacity The initial capacity of the store (speed up). 
      * @param avgDegree The average degree of each node
      */
-    public BaseMultigraph(boolean allowRepetititions, int initialCapacity, float avgDegree) {
-        this.allowRepetitions = false;
+    public BaseMultigraph(int initialCapacity, float avgDegree) {
         this.edgeSize = (int)Math.ceil(avgDegree);
         
-//        if (this.allowRepetitions) {
-//            vertices = new ArrayList<Long>(initialCapacity);
-//        } else {
-//            vertices = new HashSet<Long>(initialCapacity);
-//        } 
-        nodeEdges = new HashMap<Long, EdgeContainer>(initialCapacity);
-        edges = new ArrayList<Edge>((int)Math.ceil(initialCapacity * avgDegree));
+        nodeEdges = new HashMap<>(initialCapacity);
+        edges = new HashSet<>((int)Math.ceil(initialCapacity * avgDegree));
     }
     
         
@@ -234,7 +223,7 @@ public class BaseMultigraph implements Multigraph {
     {
         if (nodeEdges.keySet().size() > MIN_SIZE_PARALLELIZATION) {
             ExecutorService pool = Executors.newFixedThreadPool(3);
-            List<Future> tasks = new ArrayList<Future>();
+            List<Future> tasks = new ArrayList<>();
             tasks.add(pool.submit(new AddToMap(graph)));
             //tasks.add(pool.submit(new AddToCollection(vertices, graph)));
             tasks.add(pool.submit(new AddToCollection(edges, graph)));
@@ -282,8 +271,32 @@ public class BaseMultigraph implements Multigraph {
         return new BaseEdgeContainer();
     }
 
+    @Override
     public Iterator<Long> iterator() {
         return nodeEdges.keySet().iterator();
+    }
+
+    @Override
+    public void removeVertex(Long id) throws NullPointerException {
+        EdgeContainer container = nodeEdges.remove(id);
+        for (Edge edge : container.getIncoming()) {
+            edges.remove(edge);
+        }
+        for (Edge edge : container.getOutgoing()) {
+            edges.remove(edge);
+        }
+    }
+
+    @Override
+    public void removeEdge(Long src, Long dest, Long label) throws IllegalArgumentException, NullPointerException {
+        removeEdge(new Edge(src,dest,label));
+    }
+
+    @Override
+    public void removeEdge(Edge edge) throws IllegalArgumentException, NullPointerException {
+        edges.remove(edge);
+        nodeEdges.get(edge.getSource()).getOutgoing().remove(edge);
+        nodeEdges.get(edge.getDestination()).getIncoming().remove(edge);
     }
     
     /*

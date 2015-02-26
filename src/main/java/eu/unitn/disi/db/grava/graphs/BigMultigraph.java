@@ -50,7 +50,7 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
     private int nodeNumber;
     private Set<Edge> edgeSet;
     //TODO: Use this
-    private int numEdges; 
+    //private int numEdges; 
 
     public BigMultigraph() {
     }
@@ -99,19 +99,6 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
             String line;
             String[] tokens;
             int count = 0;
-//            int index;
-//            line = in.readLine();
-//            if (line != null) {
-//                line = line.trim();
-//                if (edges == -1) {
-//                    if (line.startsWith("#") && (index = line.indexOf("edges:")) != -1) {
-//                        int i;
-//                        for (i = index + 6; Character.isDigit(line.charAt(i)) && i < line.length(); i++);
-//                        edges = Integer.parseInt(line.substring(index + 6, i));
-//                    } else {
-//                        edges = Utilities.countLines(edgeFile);
-//                    }
-//                } 
             while((line = in.readLine()) != null) {
                 line = line.trim();
                 if (!"".equals(line) && !line.startsWith("#")) { //Comment
@@ -315,7 +302,21 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
     //TODO: Implement this. 
     @Override
     public boolean containsVertex(Long vertex) throws NullPointerException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return Utilities.binaryTableSearch(inEdges, vertex) >= 0 || Utilities.binaryTableSearch(outEdges, vertex) >= 0;
+    }
+
+    @Override
+    public void removeVertex(Long id) throws NullPointerException {
+        throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed.");    }
+
+    @Override
+    public void removeEdge(Long src, Long dest, Long label) throws IllegalArgumentException, NullPointerException {
+        throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed.");
+    }
+
+    @Override
+    public void removeEdge(Edge edge) throws IllegalArgumentException, NullPointerException {
+        throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed.");
     }
 
 
