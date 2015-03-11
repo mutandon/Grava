@@ -31,12 +31,16 @@ import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -276,6 +280,42 @@ public final class Utilities {
     public static void binaryTableSort(long[][] table) {
         Arrays.sort(table, new TableComparator());
     }
+
+    /**
+     * Sort a bidimensional array using a parallelized version of merge sort
+     * @param table 
+     * @param numThreads
+     */
+    public static void fastBinaryTableSort(long[][] table, int numThreads) {
+        int chunkSize = (int) Math.round(table.length /(double)numThreads + 0.5); 
+        List<Future<double[][]>> lists = new ArrayList<>();
+        
+       
+
+        ////////////////////// USE 1 THREAD
+        //chunkSize =  graphNodes.size();
+        ////////////////////// USE 1 THREAD
+
+
+//        for (Long node : graphNodes) {
+//            //if (nodesSimilarity(queryConcept, node) > MIN_SIMILARITY) {
+//            if (count % chunkSize == 0) {
+//                tmpChunk = new LinkedList<>();
+//                nodesChunks.add(tmpChunk);
+//
+//            }
+//
+//            tmpChunk.add(node);
+//            count++;
+//
+//            //} else {
+//            //     loggable.error("Similarity not satisfied..");
+//            //}
+//        }
+        
+        Arrays.sort(table, new TableComparator());
+    }
+
     
     public static int binaryTableSearch(long[][] table, long vertex) {
         return binaryTableSearch(table, 0, vertex);
