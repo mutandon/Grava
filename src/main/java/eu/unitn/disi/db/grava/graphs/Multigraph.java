@@ -71,6 +71,13 @@ public interface Multigraph extends Iterable<Long> {
 
 
     /**
+     * Returns The number of edges
+     * @return The number of edges
+     */
+    public int numberOfEdges();
+
+
+    /**
      * Returns the set of edges of the graph
      * @return The set of edges
      */

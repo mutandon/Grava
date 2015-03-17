@@ -33,7 +33,7 @@ import java.util.concurrent.Future;
 /**
  * This class represents a multigraph that is a structure that holds a set of
  * vertices and labeled edges
- * 
+ *
  * @author Davide Mottin <mottin@disi.unitn.eu>
  */
 public class BaseMultigraph implements Multigraph {
@@ -42,7 +42,9 @@ public class BaseMultigraph implements Multigraph {
     protected Map<Long, EdgeContainer> nodeEdges;
     protected List<Edge> edges;
     protected boolean allowRepetitions;
-    private int edgeSize;
+
+    //Used to initialize ArrayList of Out/In Edges
+    private int avgNodeDegree;
 
     private static final int DEFAULT_CAPACITY = 16;
     private static final float DEFAULT_DEGREE = 1f;
@@ -75,7 +77,7 @@ public class BaseMultigraph implements Multigraph {
      */
     public BaseMultigraph(boolean allowRepetititions, int initialCapacity, float avgDegree) {
         this.allowRepetitions = false;
-        this.edgeSize = (int)Math.ceil(avgDegree);
+        this.avgNodeDegree = (int)Math.ceil(avgDegree);
 
 //        if (this.allowRepetitions) {
 //            vertices = new ArrayList<Long>(initialCapacity);
@@ -293,6 +295,12 @@ public class BaseMultigraph implements Multigraph {
         return nodeEdges.size();
     }
 
+    @Override
+    public int numberOfEdges() {
+        return .size();
+    }
+
+
     /*
      * Represents a container for the two set of edges (this prevents us to
      * use two different maps in the class)
@@ -303,11 +311,11 @@ public class BaseMultigraph implements Multigraph {
 
         public BaseEdgeContainer() {
             if (allowRepetitions) {
-                incoming = new ArrayList<>(edgeSize);
-                outgoing = new ArrayList<>(edgeSize);
+                incoming = new ArrayList<>(avgNodeDegree);
+                outgoing = new ArrayList<>(avgNodeDegree);
             } else {
-                incoming = new HashSet<>(edgeSize);
-                outgoing = new HashSet<>(edgeSize);
+                incoming = new HashSet<>(avgNodeDegree);
+                outgoing = new HashSet<>(avgNodeDegree);
             }
         }
 
