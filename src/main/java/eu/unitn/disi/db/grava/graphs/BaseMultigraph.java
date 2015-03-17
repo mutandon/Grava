@@ -40,8 +40,7 @@ public class BaseMultigraph implements Multigraph {
     private static final int MIN_SIZE_PARALLELIZATION = 2000;
 
     protected Map<Long, EdgeContainer> nodeEdges;
-    protected List<Edge> edges;
-    protected boolean allowRepetitions;
+    protected Collection<Edge> edges;
 
     //Used to initialize ArrayList of Out/In Edges
     private int avgNodeDegree;
@@ -50,42 +49,28 @@ public class BaseMultigraph implements Multigraph {
     private static final float DEFAULT_DEGREE = 1f;
 
     /**
-     * Construct a multigraph that does not allow repetitions and has an initial
+     * Construct a multigraph that  has an initial
      * capacity of 2
      */
     public BaseMultigraph() {
-        this(false, DEFAULT_CAPACITY, DEFAULT_DEGREE);
-    }
-
-    public BaseMultigraph(boolean haveRepetitions) {
-        this(haveRepetitions, DEFAULT_CAPACITY, DEFAULT_DEGREE);
+        this(DEFAULT_CAPACITY, DEFAULT_DEGREE);
     }
 
     public BaseMultigraph(int capacity) {
-        this(false, capacity, DEFAULT_DEGREE);
+        this(capacity, DEFAULT_DEGREE);
     }
 
     /**
-     * Construct a multigraph specifying an initial capacity and the
-     * allowRepetitions flag. If the repetitions are allowed the vertices are stored
-     * in a {@link List} to speed up performances, otherwise in a {@link Set} to
-     * ensure the correcteness.
+     * Construct a multigraph specifying an initial capacity,  the vertices are stored
+     * in  a {@link Set} to ensure the correcteness.
      *
-     * @param allowRepetititions If true use an {@link ArrayList} instead of a {@link HashSet}
      * @param initialCapacity The initial capacity of the store (speed up).
      * @param avgDegree The average degree of each node
      */
-    public BaseMultigraph(boolean allowRepetititions, int initialCapacity, float avgDegree) {
-        this.allowRepetitions = false;
+    public BaseMultigraph(int initialCapacity, float avgDegree) {
         this.avgNodeDegree = (int)Math.ceil(avgDegree);
-
-//        if (this.allowRepetitions) {
-//            vertices = new ArrayList<Long>(initialCapacity);
-//        } else {
-//            vertices = new HashSet<Long>(initialCapacity);
-//        }
         nodeEdges = new HashMap<>(initialCapacity);
-        edges = new ArrayList<>((int)Math.ceil(initialCapacity * avgDegree));
+        edges = new HashSet<>((int)Math.ceil(initialCapacity * avgDegree));
     }
 
 
@@ -291,13 +276,39 @@ public class BaseMultigraph implements Multigraph {
     }
 
     @Override
+    public void removeVertex(Long id) throws NullPointerException {
+        EdgeContainer container = nodeEdges.remove(id);
+        for (Edge edge : container.getIncoming()) {
+            edges.remove(edge);
+        }
+        for (Edge edge : container.getOutgoing()) {
+            edges.remove(edge);
+        }
+    }
+
+
+    @Override
     public int numberOfNodes() {
         return nodeEdges.size();
     }
 
+
+    @Override
+    public void removeEdge(Long src, Long dest, Long label) throws IllegalArgumentException, NullPointerException {
+        removeEdge(new Edge(src,dest,label));
+    }
+
+
+    public void removeEdge(Edge edge) throws IllegalArgumentException, NullPointerException {
+        edges.remove(edge);
+        nodeEdges.get(edge.getSource()).getOutgoing().remove(edge);
+        nodeEdges.get(edge.getDestination()).getIncoming().remove(edge);
+    }
+
+
     @Override
     public int numberOfEdges() {
-        return .size();
+        return edges.size();
     }
 
 
@@ -310,13 +321,8 @@ public class BaseMultigraph implements Multigraph {
         protected Collection<Edge> outgoing;
 
         public BaseEdgeContainer() {
-            if (allowRepetitions) {
-                incoming = new ArrayList<>(avgNodeDegree);
-                outgoing = new ArrayList<>(avgNodeDegree);
-            } else {
-                incoming = new HashSet<>(avgNodeDegree);
-                outgoing = new HashSet<>(avgNodeDegree);
-            }
+            incoming = new HashSet<>(avgNodeDegree);
+            outgoing = new HashSet<>(avgNodeDegree);
         }
 
         @Override
@@ -345,8 +351,8 @@ public class BaseMultigraph implements Multigraph {
      * have better results
      */
     private class AddToCollection implements Runnable {
-        private final Collection coll;
-        private final BaseMultigraph graph;
+        private Collection coll;
+        private BaseMultigraph graph;
 
         public AddToCollection(Collection coll, BaseMultigraph graph) {
             this.coll = coll;
@@ -361,7 +367,7 @@ public class BaseMultigraph implements Multigraph {
     }
 
     private class AddToMap implements Runnable {
-        private final BaseMultigraph graph;
+        private BaseMultigraph graph;
 
         public AddToMap(BaseMultigraph graph) {
             this.graph = graph;

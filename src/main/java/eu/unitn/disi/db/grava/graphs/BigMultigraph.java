@@ -29,7 +29,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -49,22 +48,22 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
     private int[] lastOutBounds;
     private int nodeNumber;
     private Set<Edge> edgeSet;
-    //TODO: Use this
-    private int numEdges;
+    private enum separator {space , tab, unknown };
 
     public BigMultigraph() {
     }
 
     /**
-     * Takes in input the graph ordered by source and by dest to have a faster
-     * computation
+     * Takes in input the non-ordered graph and orders it by source and by dest
+     *
      * @param inFile
      * @param outFile
      * @param edges
+     * @param sort
      * @throws ParseException
      * @throws IOException
      */
-    public BigMultigraph(String inFile, String outFile, int edges) throws ParseException, IOException {
+    public BigMultigraph(String inFile, String outFile, int edges, boolean sort) throws ParseException, IOException {
         lastInVertex = -1;
         lastOutVertex = -1;
         nodeNumber = -1;
@@ -81,10 +80,32 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
         outEdges = new long[edges][];
         loadEdges(inFile, true);
         loadEdges(outFile, false);
+
+        if (sort) {
+            Utilities.binaryTableSort(inEdges);
+            Utilities.binaryTableSort(outEdges);
+        }
+    }
+
+        /**
+     * Takes in input the graph ordered by source and by dest to have a faster
+     * computation
+     * @param inFile
+     * @param outFile
+     * @param edges
+     * @throws ParseException
+     * @throws IOException
+     */
+    public BigMultigraph(String inFile, String outFile, int edges) throws ParseException, IOException {
+        this(inFile, outFile, edges, false);
     }
 
     public BigMultigraph(String inFile, String outFile) throws ParseException, IOException {
-        this(inFile, outFile, -1);
+        this(inFile, outFile, -1, false);
+    }
+
+    public BigMultigraph(String inFile, String outFile, boolean sort) throws ParseException, IOException {
+        this(inFile, outFile, -1, sort);
     }
 
     private void loadEdges(String edgeFile, boolean incoming) throws ParseException, IOException {
@@ -99,29 +120,29 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
             String line;
             String[] tokens;
             int count = 0;
-//            int index;
-//            line = in.readLine();
-//            if (line != null) {
-//                line = line.trim();
-//                if (edges == -1) {
-//                    if (line.startsWith("#") && (index = line.indexOf("edges:")) != -1) {
-//                        int i;
-//                        for (i = index + 6; Character.isDigit(line.charAt(i)) && i < line.length(); i++);
-//                        edges = Integer.parseInt(line.substring(index + 6, i));
-//                    } else {
-//                        edges = Utilities.countLines(edgeFile);
-//                    }
-//                }
+            separator splitting = separator.unknown;
             while((line = in.readLine()) != null) {
                 line = line.trim();
                 if (!"".equals(line) && !line.startsWith("#")) { //Comment
-                    tokens = Utilities.fastSplit(line, ' ', 3); // split on whitespace
-                    if (tokens.length < 3) { // line too short
-                        tokens = Utilities.fastSplit(line, '\t', 3);
-                        if (tokens.length != 3) {
-                            throw new ParseException("Line[" + (count + 1) +  "]: " + line + " is malformed, num tokens " + tokens.length);
-                        }
+                    switch (splitting) {
+                        case space:
+                            tokens = Utilities.fastSplit(line, ' ', 3); // split on whitespace
+                            break;
+                        case tab:
+                            tokens = Utilities.fastSplit(line, '\t', 3); //split on tab
+                            break;
+                        default: //case unknown
+                            tokens = Utilities.fastSplit(line, ' ', 3); // try to split on whitespace
+                            splitting = separator.space;
+                            if (tokens.length != 3) { // line too short or too long
+                                tokens = Utilities.fastSplit(line, '\t', 3); //try to split on tab
+                                splitting = separator.tab;
+                            }
                     }
+                    if (tokens.length != 3) {
+                        throw new ParseException("Line[" + (count + 1) +  "]: " + line + " is malformed, num tokens " + tokens.length);
+                    }
+
                     source = Long.parseLong(tokens[0]);
                     dest = Long.parseLong(tokens[1]);
                     label = Long.parseLong(tokens[2]);
@@ -195,6 +216,12 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
         }
         return nodeNumber;
     }
+
+    @Override
+    public int numberOfEdges() {
+        return inEdges.length;
+    }
+
 
     @Override
     public Collection<Edge> edgeSet() {
@@ -316,7 +343,21 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
     //TODO: Implement this.
     @Override
     public boolean containsVertex(Long vertex) throws NullPointerException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return Utilities.binaryTableSearch(inEdges, vertex) >= 0 || Utilities.binaryTableSearch(outEdges, vertex) >= 0;
+    }
+
+    @Override
+    public void removeVertex(Long id) throws NullPointerException {
+        throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed.");    }
+
+    @Override
+    public void removeEdge(Long src, Long dest, Long label) throws IllegalArgumentException, NullPointerException {
+        throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed.");
+    }
+
+    @Override
+    public void removeEdge(Edge edge) throws IllegalArgumentException, NullPointerException {
+        throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed.");
     }
 
 

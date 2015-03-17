@@ -25,7 +25,6 @@ import java.util.concurrent.ExecutionException;
  * @author Davide Mottin <mottin@disi.unitn.eu>
  */
 public interface Multigraph extends Iterable<Long> {
-
     /**
      * Add a vertex in the graph. This must be called on source and destination
      * node before the {@link #addEdge(java.lang.Long, java.lang.Long, java.lang.Long) }
@@ -56,7 +55,34 @@ public interface Multigraph extends Iterable<Long> {
      * @throws NullPointerException if the input edge is null
      */
     public void addEdge(Edge edge) throws IllegalArgumentException, NullPointerException;
-
+    /**
+     * Remove a vertex in the graph and its connected edges.
+     * @param id The id of the node to be deleted
+     * @throws NullPointerException if the input vertex is null
+     */
+    public void removeVertex(Long id) throws NullPointerException;
+    /**
+     * Remove an edge from the graph.
+     * It does not remove dangling nodes; {@link #removeVertex(java.lang.Long)} on the endpoints must
+     * be called instead.
+     * @param src The source node in this directed multigraph
+     * @param dest The dest node in this directed multigraph
+     * @param label The label of the edge to be created
+     * @throws IllegalArgumentException If src and dest are not present in the
+     * vertex collection
+     * @throws NullPointerException if one of the input is null
+     */
+    public void removeEdge(Long src, Long dest, Long label) throws IllegalArgumentException, NullPointerException;
+    /**
+     * Remove an edge from the graph.
+     * It does not remove dangling nodes; {@link #removeVertex(java.lang.Long)} on the endpoints must
+     * be called instead.
+     * @param edge The edge to be removed from the graph
+     * @throws IllegalArgumentException If src and edges are not present in the
+     * vertex collection
+     * @throws NullPointerException if the input edge is null
+     */
+    public void removeEdge(Edge edge) throws IllegalArgumentException, NullPointerException;
     /**
      * Returns the set of vertices of the graph
      * @return The set of vertices
