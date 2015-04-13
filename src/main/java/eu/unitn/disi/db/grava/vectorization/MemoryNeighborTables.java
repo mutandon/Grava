@@ -17,8 +17,8 @@
  */
 package eu.unitn.disi.db.grava.vectorization;
 
-import eu.unitn.disi.db.grava.exceptions.DataException;
-import eu.unitn.disi.db.grava.utils.Utilities;
+import eu.unitn.disi.db.mutilities.exceptions.DataException;
+import eu.unitn.disi.db.mutilities.CollectionUtilities;
 import java.util.HashMap;
 import java.util.Map;
 

@@ -17,8 +17,8 @@
  */
 package eu.unitn.disi.db.grava.vectorization;
 
-import eu.unitn.disi.db.grava.exceptions.DataException;
-import eu.unitn.disi.db.grava.utils.Utilities;
+import eu.unitn.disi.db.mutilities.exceptions.DataException;
+import eu.unitn.disi.db.mutilities.CollectionUtilities;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -102,14 +102,14 @@ public class DirectoryNeighborTables extends NeighborTables {
                         //labelDirectory.mkdir();
                         writer = new BufferedWriter(new FileWriter(labelDirectory.getCanonicalPath() + File.separator + (i + 1), true), PAGE_SIZE * PAGE_SIZE);
                         writer.append(nodes[i].toString());
-                        Utilities.close(writer);
+                        CollectionUtilities.close(writer);
                     }
                 }
             }
         } catch (IOException ex) {
             throw new DataException(ex);
         } finally {
-            Utilities.close(writer);
+            CollectionUtilities.close(writer);
         }
         labelIndex = new HashMap<Long, StringBuilder[]>();
         return true;
