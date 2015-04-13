@@ -17,8 +17,8 @@
  */
 package eu.unitn.disi.db.grava.vectorization;
 
-import eu.unitn.disi.db.grava.exceptions.DataException;
-import eu.unitn.disi.db.grava.utils.Utilities;
+import eu.unitn.disi.db.mutilities.exceptions.DataException;
+import eu.unitn.disi.db.mutilities.CollectionUtilities;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
@@ -101,7 +101,7 @@ public class NodeVectors implements Closeable {
                 reader = new BufferedReader(new FileReader(labelFrequency));
                 while ((line = reader.readLine()) != null) {
                     if (!"".equals(line)) {
-                        splittedLine = Utilities.fastSplit(line, ' ', 2);
+                        splittedLine = CollectionUtilities.fastSplit(line, ' ', 2);
                         frequency = Integer.parseInt(splittedLine[1]);
         //                edgeNumber += frequency;
                         labels.add(Long.parseLong(splittedLine[0]));
@@ -112,7 +112,7 @@ public class NodeVectors implements Closeable {
             } catch (IOException ex) {
                 throw ex;
             } finally {
-                Utilities.close(reader);
+                CollectionUtilities.close(reader);
             }
         }
 
@@ -169,7 +169,7 @@ public class NodeVectors implements Closeable {
         int position;
         try {
             assert index != null;
-            position = Utilities.binaryTableSearch(index, node);
+            position = CollectionUtilities.binaryTableSearch(index, node);
             if (position >= 0) {
                 vectorFile.seek(index[position][1]);
                 //debug("Found the correct position");
@@ -179,7 +179,7 @@ public class NodeVectors implements Closeable {
                     vector = new HashMap<Long, Double>();
                     line = line.substring(1); //remove %
                     while (line != null && !line.startsWith("%")) {
-                        splittedLine = Utilities.fastSplit(line, ' ', 2);
+                        splittedLine = CollectionUtilities.fastSplit(line, ' ', 2);
                         vector.put(Long.parseLong(splittedLine[0]), Double.parseDouble(splittedLine[1]));
                         line = vectorFile.readLine();
                     }
@@ -214,7 +214,7 @@ public class NodeVectors implements Closeable {
 
         while ((line = indexFile.readLine()) != null) {
             if (!"".equals(line)) {
-                splittedLine = Utilities.fastSplit(line, ' ', 2);
+                splittedLine = CollectionUtilities.fastSplit(line, ' ', 2);
                 index[count] = new long[2];
                 index[count][0] = Long.parseLong(splittedLine[0]);
                 index[count][1] = Long.parseLong(splittedLine[1]);
@@ -345,8 +345,8 @@ public class NodeVectors implements Closeable {
 
         } catch (IOException ex) {  
             System.out.printf("Some exception occurred while writing into the file", ex);
-            Utilities.close(indexFile);
-            Utilities.close(vectorFile);
+            CollectionUtilities.close(indexFile);
+            CollectionUtilities.close(vectorFile);
         } 
         return true;
     }

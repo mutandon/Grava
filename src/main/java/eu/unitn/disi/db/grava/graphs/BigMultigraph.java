@@ -17,8 +17,9 @@
  */
 package eu.unitn.disi.db.grava.graphs;
 
-import eu.unitn.disi.db.grava.exceptions.ParseException;
-import eu.unitn.disi.db.grava.utils.Utilities;
+import eu.unitn.disi.db.mutilities.exceptions.ParseException;
+import eu.unitn.disi.db.mutilities.CollectionUtilities;
+import eu.unitn.disi.db.mutilities.LoggableObject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -39,7 +40,7 @@ import java.util.concurrent.ExecutionException;
  *
  * @author Davide Mottin <mottin@disi.unitn.eu>
  */
-public class BigMultigraph implements Multigraph, Iterable<Long>  {
+public class BigMultigraph extends LoggableObject implements Multigraph, Iterable<Long>  {
     private long[][] inEdges;
     private long[][] outEdges;
     private long lastInVertex;
@@ -48,9 +49,29 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
     private int[] lastOutBounds;
     private int nodeNumber;
     private Set<Edge> edgeSet;
-    private enum separator {space , tab, unknown };
+    private Separator separator; 
+    private static final int SOURCE_POSITION = 0; 
+    private static final int DEST_POSITION = 1; 
+    private static final int REL_POSITION = 2; 
+    //TODO: Use this
+    //private int numEdges; 
+    
+    public enum Separator {
+        SPACE(' '), 
+        TAB('\t');
+        
+        char delimiter; 
+        private Separator(char delimiter) {
+            this.delimiter = delimiter;
+        }
 
-    public BigMultigraph() {
+        public char getDelimiter() {
+            return delimiter;
+        }
+    };
+           
+    public BigMultigraph(String graphFile) throws ParseException, IOException {
+        this(graphFile, graphFile, -1, null, 1);
     }
 
     /**
@@ -63,56 +84,106 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
      * @throws ParseException
      * @throws IOException
      */
-    public BigMultigraph(String inFile, String outFile, int edges, boolean sort) throws ParseException, IOException {
+
+    public BigMultigraph(String graphFile, int numThreads) throws ParseException, IOException {
+        this(graphFile, graphFile, -1, null, numThreads);
+    }
+
+    
+    public BigMultigraph(String inFile, String outFile) throws ParseException, IOException {
+        this(inFile, outFile, -1, null, 1);
+    } 
+    
+    public BigMultigraph(String inFile, String outFile, int edges) throws ParseException, IOException {
+        this(inFile, outFile, edges, null, 1);
+    }
+    
+    public BigMultigraph(String inFile, String outFile, Separator separator, int numThreads) throws ParseException, IOException {
+        this(inFile, outFile, -1, separator, numThreads);
+    } 
+
+    
+    /**
+     * Takes in input the non-ordered graph and orders it by source and by dest 
+     * 
+     * @param inFile The inbound file
+     * @param outFile The outgoing file
+     * @param edges Number of edges
+     * @param sort Sort the input file
+     * @param separator Separator of the file
+     * @throws ParseException The input file is malformed
+     * @throws IOException The input file is not readable
+     */
+    private BigMultigraph(String inFile, String outFile, int edges, Separator separator, int numThreads) throws ParseException, IOException {
         lastInVertex = -1;
         lastOutVertex = -1;
         nodeNumber = -1;
         lastInBounds = new int[2];
         lastOutBounds = new int[2];
         edgeSet = null;
-
+        this.separator = separator;
+        
         if (edges == -1) {
-            edges = Utilities.countLines(inFile);
+            edges = CollectionUtilities.countLines(inFile);
         }
 
         //TODO: Add a check on different sizes.
         inEdges = new long[edges][];
         outEdges = new long[edges][];
-        loadEdges(inFile, true);
-        loadEdges(outFile, false);
-
-        if (sort) {
-            Utilities.binaryTableSort(inEdges);
-            Utilities.binaryTableSort(outEdges);
+        //If the file is the same load once and create a second array from the first array. 
+        if (inFile.equals(outFile)) {
+            warn("Loading from a single file, creating a copy of the edges and sorting.");
+            loadEdges(inFile, true);
+            long[] edge; 
+            for (int i = 0; i < inEdges.length; i++) {
+                edge = inEdges[i];
+                outEdges[i] = new long[]{edge[1], edge[0], edge[2]};
+            }
+        } else {
+            loadEdges(inFile, true);
+            loadEdges(outFile, false);
+        }
+        try {
+            checkSort(inEdges, true, numThreads); 
+            checkSort(outEdges, false, numThreads); 
+        } catch (InterruptedException | ExecutionException ex) {
+            throw new ParseException(ex);
         }
     }
 
-        /**
-     * Takes in input the graph ordered by source and by dest to have a faster
-     * computation
-     * @param inFile
-     * @param outFile
-     * @param edges
-     * @throws ParseException
-     * @throws IOException
-     */
-    public BigMultigraph(String inFile, String outFile, int edges) throws ParseException, IOException {
-        this(inFile, outFile, edges, false);
-    }
-
-    public BigMultigraph(String inFile, String outFile) throws ParseException, IOException {
-        this(inFile, outFile, -1, false);
-    }
-
-    public BigMultigraph(String inFile, String outFile, boolean sort) throws ParseException, IOException {
-        this(inFile, outFile, -1, sort);
+    /*
+    * Check if the arrays are sorted, sort otherwise
+    */ 
+    private void checkSort(long[][] edges, boolean incoming, int numThreads) throws InterruptedException, ExecutionException {
+        boolean unsorted = false;
+        long prev = Long.MIN_VALUE; 
+        for (long[] edge : edges) {
+            if (prev <= edge[0]) {
+                prev = edge[0];
+            } else {
+                unsorted = true; 
+                break;
+            }
+        }
+        if (unsorted) {
+            if (incoming) {
+                warn("Incoming edges are unsorted: sorting ...");
+            } else {
+                warn("Outgoing edges are unsorted: sorting ...");
+            }
+            if (numThreads > 1) {
+                CollectionUtilities.parallelBinaryTableSort(edges, numThreads);
+            } else {
+                CollectionUtilities.binaryTableSort(edges);
+            }
+            
+            info("Sorting complete");
+        }
     }
 
     private void loadEdges(String edgeFile, boolean incoming) throws ParseException, IOException {
-        try {
-            File file = new File(edgeFile);
-            BufferedReader in = new BufferedReader(new FileReader(file));
-
+        File file = new File(edgeFile);
+        try (BufferedReader in = new BufferedReader(new FileReader(file))) {
             long source;
             long dest;
             long label;
@@ -120,32 +191,41 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
             String line;
             String[] tokens;
             int count = 0;
-            separator splitting = separator.unknown;
+            char delimiter = ' ';
+          
+            if (separator == null) {
+                in.mark(2056);
+                while((line = in.readLine()) != null) {
+                    if (!"".equals(line) && !line.startsWith("#")) { //Comment
+                        tokens = CollectionUtilities.fastSplit(line, ' ', 3); // try to split on whitespace
+                        delimiter = ' ';
+                        if (tokens.length != 3) { // line too short or too long
+                            tokens = CollectionUtilities.fastSplit(line, '\t', 3); //try to split on tab
+                            if (tokens.length != 3) {
+                                throw new ParseException("Token separator not recognized");
+                            }
+                            delimiter = '\t';
+                        }
+                        info("Recognized separator token '%c'\n", delimiter);
+                        break;
+                    }
+                }
+                in.reset();
+            } else {
+                delimiter = separator.delimiter;
+            }
+            
             while((line = in.readLine()) != null) {
                 line = line.trim();
                 if (!"".equals(line) && !line.startsWith("#")) { //Comment
-                    switch (splitting) {
-                        case space:
-                            tokens = Utilities.fastSplit(line, ' ', 3); // split on whitespace
-                            break;
-                        case tab:
-                            tokens = Utilities.fastSplit(line, '\t', 3); //split on tab
-                            break;
-                        default: //case unknown
-                            tokens = Utilities.fastSplit(line, ' ', 3); // try to split on whitespace
-                            splitting = separator.space;
-                            if (tokens.length != 3) { // line too short or too long
-                                tokens = Utilities.fastSplit(line, '\t', 3); //try to split on tab
-                                splitting = separator.tab;
-                            }
-                    }
-                    if (tokens.length != 3) {
-                        throw new ParseException("Line[" + (count + 1) +  "]: " + line + " is malformed, num tokens " + tokens.length);
-                    }
+                    tokens = CollectionUtilities.fastSplit(line, delimiter, 3);   
 
-                    source = Long.parseLong(tokens[0]);
-                    dest = Long.parseLong(tokens[1]);
-                    label = Long.parseLong(tokens[2]);
+                    if (tokens.length != 3) {
+                        throw new ParseException("Line[%d]: %s is malformed, num tokens %d", (count + 1), line, tokens.length);
+                    }                    
+                    source = Long.parseLong(tokens[SOURCE_POSITION]);
+                    dest = Long.parseLong(tokens[DEST_POSITION]);
+                    label = Long.parseLong(tokens[REL_POSITION]);
                     if (incoming) {
                         inEdges[count] = new long[]{dest, source, label};
                     } else {
@@ -155,14 +235,12 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
                 }
                 count++;
                 if (count % 50000000 == 0) {
-                    System.out.printf("Processed %d lines of %s\n", count, edgeFile);
+                    info("Processed %d lines of %s\n", count, edgeFile);
                 }
-            } // END WHILE
-//            } // END IF
+            }
         } catch (IOException ex) {
             throw ex;
         }
-//        return edges;
     }
 
     @Override
@@ -188,15 +266,15 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
         lastInBounds = new int[2];
         lastOutBounds = new int[2];
         edgeSet = null;
-        Utilities.binaryTableSort(inEdges);
-        Utilities.binaryTableSort(outEdges);
+        CollectionUtilities.binaryTableSort(inEdges);
+        CollectionUtilities.binaryTableSort(outEdges);
         this.inEdges = inEdges;
         this.outEdges = outEdges;
     }
 
     @Override
     public Collection<Long> vertexSet() {
-        Set<Long> verteces = new HashSet<Long>();
+        Set<Long> verteces = new HashSet<>();
         for (int i = 0; i < inEdges.length; i++) {
             verteces.add(inEdges[i][0]);
             verteces.add(outEdges[i][0]);
@@ -321,7 +399,7 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
 
     private static void boundsOf(long[][] edges, int[] bounds, long vertex) {
         int i;
-        int startingIndex = Utilities.binaryTableSearch(edges, vertex);
+        int startingIndex = CollectionUtilities.binaryTableSearch(edges, vertex);
         if (startingIndex >= 0) {
             i = startingIndex;
             while (i < edges.length && edges[i][0] == vertex) { i++; }
@@ -343,7 +421,7 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
     //TODO: Implement this.
     @Override
     public boolean containsVertex(Long vertex) throws NullPointerException {
-        return Utilities.binaryTableSearch(inEdges, vertex) >= 0 || Utilities.binaryTableSearch(outEdges, vertex) >= 0;
+        return CollectionUtilities.binaryTableSearch(inEdges, vertex) >= 0 || CollectionUtilities.binaryTableSearch(outEdges, vertex) >= 0;
     }
 
     @Override
@@ -417,10 +495,10 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
                 }
                 return value;
             } catch (Exception ex) {
-                ex.printStackTrace();
+                //ex.printStackTrace();
                 throw new NoSuchElementException("No more elements to explore");
             }
-            //assert false : "This part of the code should be unreachable";
+            //assert true : "This part of the code should be unreachable";
             //return null;
         }
 
@@ -441,5 +519,9 @@ public class BigMultigraph implements Multigraph, Iterable<Long>  {
     @Override
     public Iterator<Long> iterator() {
         return new NodeIterator();
+    }
+    
+    public long[][] getEdges() {
+        return inEdges;
     }
 }

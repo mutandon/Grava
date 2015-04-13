@@ -20,6 +20,7 @@ package eu.unitn.disi.db.grava.utils;
 
 import eu.unitn.disi.db.grava.graphs.Edge;
 import eu.unitn.disi.db.grava.graphs.Multigraph;
+import eu.unitn.disi.db.mutilities.Pair;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

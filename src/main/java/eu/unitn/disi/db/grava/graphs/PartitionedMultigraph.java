@@ -17,12 +17,12 @@
  */
 package eu.unitn.disi.db.grava.graphs;
 
-import eu.unitn.disi.db.grava.exceptions.ParseException;
+import eu.unitn.disi.db.mutilities.exceptions.ParseException;
 import eu.unitn.disi.db.grava.graphs.collections.PartitionableCollection;
 import eu.unitn.disi.db.grava.graphs.collections.PartitionableMap;
 import eu.unitn.disi.db.grava.graphs.collections.PartitionedList;
 import eu.unitn.disi.db.grava.graphs.collections.PartitionedMap;
-import eu.unitn.disi.db.grava.utils.Utilities;
+import eu.unitn.disi.db.mutilities.CollectionUtilities;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -92,9 +92,9 @@ public final class PartitionedMultigraph extends BaseMultigraph {
             while ((line = in.readLine()) != null) {
                 count++;
                 if (!"".equals(line.trim()) && !line.trim().startsWith("#")) { //Comment
-                    tokens = Utilities.fastSplit(line, ' ', 3); // split on whitespace
+                    tokens = CollectionUtilities.fastSplit(line, ' ', 3); // split on whitespace
                     if (tokens.length < 3) { // line too short
-                        tokens = Utilities.fastSplit(line, '\t', 3);
+                        tokens = CollectionUtilities.fastSplit(line, '\t', 3);
                         if (tokens.length != 3) {
                             throw new ParseException("Line %d is malformed", count);
                         }

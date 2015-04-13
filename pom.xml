@@ -23,6 +23,11 @@
             <version>3.8.1</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>eu.unitn.disi.db.mutilities</groupId>
+            <artifactId>MUtilities</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
     <licenses>
         <license>
