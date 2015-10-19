@@ -18,7 +18,6 @@
 package eu.unitn.disi.db.grava.vectorization;
 
 import eu.unitn.disi.db.grava.exceptions.DataException;
-import eu.unitn.disi.db.grava.utils.Utilities;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,31 +25,31 @@ import java.util.Map;
  *
  * @author Davide Mottin <mottin@disi.unitn.eu>
  */
-public class MemoryNeighborTables extends NeighborTables {    
-            
+public class MemoryNeighborTables extends NeighborTables {
+
     public MemoryNeighborTables(int k) {
-        this.k = k; 
-        levelTables = new HashMap<Long, Map<Long, Integer>[]>();
+        this.k = k;
+        levelTables = new HashMap<>();
     }
-           
+
     @Override
     public boolean addNodeLevelTable(Map<Long, Integer> levelNodeTable, long node, short level) {
-        Map<Long, Integer>[] nodeTable = levelTables.get(node); 
+        Map<Long, Integer>[] nodeTable = levelTables.get(node);
         if (nodeTable == null) {
             nodeTable = new Map[k];
         }
         nodeTable[level] = levelNodeTable;
         return levelTables.put(node, nodeTable) != null;
     }
-    
+
     @Override
     public Map<Long, Integer>[] getNodeMap(long node) {
         return levelTables.get(node);
     }
-    
+
     @Override
     public boolean serialize() throws DataException {
-        return false; 
+        return false;
     }
 
     @Override
