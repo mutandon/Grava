@@ -23,18 +23,31 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class represents the neighbor tables used in the pruning algorithm and 
- * potentially can be used as similarity metric. 
- * 
+ * This class represents the neighbor tables used in the pruning algorithm and
+ * potentially can be used as similarity metric.
+ *
  * @author Davide Mottin <mottin@disi.unitn.eu>
  */
-public abstract class NeighborTables {   
-    protected Map<Long, Map<Long, Integer>[]> levelTables = new HashMap<>();  
+public abstract class NeighborTables {
+    protected Map<Long, Map<Long, Integer>[]> levelTables = new HashMap<>();
     protected int k;
 
-    
+
+    /**
+     *
+     * @param levelNodeTable <label, count>
+     * @param node
+     * @param level
+     * @return
+     */
     public abstract boolean addNodeLevelTable(Map<Long,Integer> levelNodeTable, long node, short level);
-    
+
+    /**
+     *
+     * @param nodeTable [level]<label, count>
+     * @param node
+     * @return
+     */
     public boolean addNodeTable(Map<Long,Integer>[] nodeTable, Long node) {
         boolean value = true;
         for (short i = 0; i < nodeTable.length; i++) {
@@ -42,23 +55,28 @@ public abstract class NeighborTables {
         }
         return value;
     }
-    
-    public abstract boolean serialize() throws DataException; 
-    
+
+    public abstract boolean serialize() throws DataException;
+
+    /**
+     *
+     * @param node
+     * @return Map [level]<label, count>
+     */
     public abstract Map<Long, Integer>[] getNodeMap(long node);
-    
+
     public Set<Long> getNodes() {
         return levelTables.keySet();
     }
-    
+
     public void merge(NeighborTables tables) {
         Set<Long> nodes = tables.getNodes();
-        
+
         for (Long node : nodes) {
             addNodeTable(tables.getNodeMap(node), node);
         }
     }
-    
+
     @Override
     public abstract String toString();
 }
