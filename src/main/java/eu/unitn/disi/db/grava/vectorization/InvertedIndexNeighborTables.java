@@ -31,7 +31,7 @@ import java.util.Set;
  * algorithm
  *
  * @author Davide Mottin <mottin@disi.unitn.eu>
- * @author Davide Mottin <ml@disi.unitn.eu>
+ * @author Matteo Lissandrini <ml@disi.unitn.eu>
  * @see NeighborhoodPruningAlgorithm
  * @see GenerateNeighborTables
  */
