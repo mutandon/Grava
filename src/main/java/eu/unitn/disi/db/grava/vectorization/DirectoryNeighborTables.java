@@ -24,68 +24,44 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
 /**
- * Class tha embeds the neighbor tables to be used in the neighborhoo pruning 
+ * Class that embeds the neighbor tables to be used in the neighborhood pruning
  * algorithm
- * 
+ *
  * @author Davide Mottin <mottin@disi.unitn.eu>
  * @see NeighborhoodPruningAlgorithm
  * @see GenerateNeighborTables
  */
 @PrimitiveObject
-public class DirectoryNeighborTables extends NeighborTables {
+public class DirectoryNeighborTables extends InvertedIndexNeighborTables {
     private File indexDirectory;
-    private Map<Long, StringBuilder[]> labelIndex;
-    private static final int PAGE_SIZE = 1024;
-    private int minFrequency;
-    private int k;
-    
+    public static final int PAGE_SIZE = 1024;
+
     public DirectoryNeighborTables(File indexDirectory, int k) {
-        this();
+        super(k);
         this.indexDirectory = indexDirectory;
-        this.k = k;
     }
 
-    private DirectoryNeighborTables() {
-        labelIndex = new HashMap<Long, StringBuilder[]>();
-    }
+
 
     public void setIndexDirectory(File indexDirectory) {
         this.indexDirectory = indexDirectory;
     }
 
-    public void setMinFrequency(int minFrequency) {
-        this.minFrequency = minFrequency;
-    }
-    
-    @Override
-    public boolean addNodeLevelTable(Map<Long, Integer> levelNodeTable, long node, short level) {
-        Set<Long> labels = levelNodeTable.keySet();
-        StringBuilder[] labelNodes;
-        boolean retval = true;
-        for (Long label : labels) {
-            labelNodes = labelIndex.get(label);
-            if (labelNodes == null) {
-                labelNodes = new StringBuilder[k];
-            }
-            if (labelNodes[level] == null) {
-                labelNodes[level] = new StringBuilder();
-            }
-            labelNodes[level].append(node).append('\t').append(levelNodeTable.get(label)).append('\n'); //node[tab]count
-            labelIndex.put(label, labelNodes);
-        }
-        return retval;
-    }
-    
+
+
+
     @Override
     public boolean serialize() throws DataException {
         Set<Long> labels = labelIndex.keySet();
         File labelDirectory;
-        StringBuilder[] nodes;
+        List<LinkedHashMap<Long, Integer>> nodeMaps;
         BufferedWriter writer = null;
         int i;
 
@@ -95,14 +71,19 @@ public class DirectoryNeighborTables extends NeighborTables {
                 if (labelDirectory.mkdir()) {
                     Logger.getLogger(DirectoryNeighborTables.class.getCanonicalName()).finest(String.format("Label directory %s created, for label %d", labelDirectory.getCanonicalPath(), label));
                 }
-                nodes = labelIndex.get(label);
-                for (i = 0; i < nodes.length; i++) {
-                    if (nodes[i] != null) {
+                nodeMaps = labelIndex.get(label);
+
+                for (i = 0; i < nodeMaps.size(); i++) {
+                    final LinkedHashMap<Long, Integer> nodeCounts = nodeMaps.get(i);
+                    if ( nodeCounts != null) {
                         //labelDirectory = new File(labelDirectory, (i + 1) + "");
                         //labelDirectory.mkdir();
-                        writer = new BufferedWriter(new FileWriter(labelDirectory.getCanonicalPath() + File.separator + (i + 1), true), PAGE_SIZE * PAGE_SIZE);
-                        writer.append(nodes[i].toString());
-                        CollectionUtilities.close(writer);
+                        StringBuilder bs = new StringBuilder();
+                        for(Long nde : nodeCounts.keySet()){
+                            writer = new BufferedWriter(new FileWriter(labelDirectory.getCanonicalPath() + File.separator + (i + 1), true), PAGE_SIZE * PAGE_SIZE);
+                            writer.append(bs.append(nde).append("\t").append(nodeCounts.get(nde)).append("\n").toString());
+                            CollectionUtilities.close(writer);
+                        }
                     }
                 }
             }
@@ -111,7 +92,7 @@ public class DirectoryNeighborTables extends NeighborTables {
         } finally {
             CollectionUtilities.close(writer);
         }
-        labelIndex = new HashMap<Long, StringBuilder[]>();
+        labelIndex = new HashMap<>();
         return true;
     }
 
@@ -123,6 +104,6 @@ public class DirectoryNeighborTables extends NeighborTables {
 
     @Override
     public String toString() {
-        return "";
+        return "["+labelIndex+"] "+this.indexDirectory.getAbsolutePath();
     }
 }
