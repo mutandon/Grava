@@ -103,16 +103,32 @@ public class InvertedIndexNeighborTables extends NeighborTables {
         return nodeTable.toArray(new Map[k]);
     }
 
-    public int getBestLabelCount(Long label){
-     return getBestLabelCount(label, null);
+    public int getBestLabelCount(Long label, int level){
+     return getBestLabelCount(label, level, null);
     }
 
 
 
-    public int getBestLabelCount(Long label, Collection<Long> skipList){
-
-        return  0;
+    public int getBestLabelCount(Long label, int level, Collection<Long> skipList){
+        Long bestNode = getBestLabelCountNode(label, level, skipList);
+        return  labelIndex.get(label).get(level).get(bestNode);
     }
+
+    public Long getBestLabelCountNode(Long label, int level, Collection<Long> skipList){
+        Long bestNode = null;
+        int bestCount = 0;
+        HashMap<Long, Integer> levelMap = labelIndex.get(label).get(level);
+        for(long node : levelMap.keySet()){
+            if(!skipList.contains(node)){
+                if( levelMap.get(node)> bestCount){
+                    bestCount =  levelMap.get(node);
+                    bestNode = node;
+                }
+            }
+        }
+        return  bestNode;
+    }
+
 
 
     @Override
