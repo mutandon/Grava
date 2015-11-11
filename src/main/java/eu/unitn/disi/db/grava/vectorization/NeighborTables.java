@@ -17,6 +17,7 @@
  */
 package eu.unitn.disi.db.grava.vectorization;
 
+import eu.unitn.disi.db.mutilities.LoggableObject;
 import eu.unitn.disi.db.mutilities.exceptions.DataException;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +29,7 @@ import java.util.Set;
  *
  * @author Davide Mottin <mottin@disi.unitn.eu>
  */
-public abstract class NeighborTables {
+public abstract class NeighborTables extends LoggableObject{
     protected Map<Long, Map<Long, Integer>[]> levelTables = new HashMap<>();
     protected int k;
 
@@ -50,7 +51,11 @@ public abstract class NeighborTables {
      */
     public boolean addNodeTable(Map<Long,Integer>[] nodeTable, Long node) {
         boolean value = true;
-        for (short i = 0; i < nodeTable.length; i++) {
+        if(nodeTable.length != this.k){
+            throw new IllegalStateException("Node table for"+ node +" has illegal length. Expected "+ this.k+" found "+ node);
+        }
+
+        for (short i = 0; i < this.k; i++) {
             value = addNodeLevelTable(nodeTable[i], node, i) && value;
         }
         return value;

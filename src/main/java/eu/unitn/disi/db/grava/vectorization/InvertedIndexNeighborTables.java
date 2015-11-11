@@ -37,7 +37,7 @@ import java.util.Set;
  */
 @PrimitiveObject
 public class InvertedIndexNeighborTables extends NeighborTables {
-    protected Map<Long, List<LinkedHashMap<Long, Integer>>> labelIndex;
+    protected Map<Long, ArrayList<LinkedHashMap<Long, Integer>>> labelIndex;
 
     protected int minFrequency;
 
@@ -57,16 +57,20 @@ public class InvertedIndexNeighborTables extends NeighborTables {
     @Override
     public boolean addNodeLevelTable(Map<Long, Integer> levelNodeTable, long node, short level) {
         Set<Long> labels = levelNodeTable.keySet();
-        List<LinkedHashMap<Long, Integer>> labelNodes;
+        ArrayList<LinkedHashMap<Long, Integer>> labelNodes;
         boolean retval = true;
         for (Long label : labels) {
             labelNodes = labelIndex.get(label);
+
             if (labelNodes == null) {
                 labelNodes = new ArrayList<>(k);
             }
-            if (labelNodes.get(level) == null) {
-                labelNodes.set(level, new LinkedHashMap<Long, Integer>());
+            if(labelNodes.isEmpty()){
+                for (int i = 0; i < k; i++) {
+                    labelNodes.add(new LinkedHashMap<Long, Integer>());
+                }
             }
+
             labelNodes.get(level).put(node, levelNodeTable.get(label)); //node[tab]count
             labelIndex.put(label, labelNodes);
         }
@@ -103,6 +107,10 @@ public class InvertedIndexNeighborTables extends NeighborTables {
         return nodeTable.toArray(new Map[k]);
     }
 
+    public Set<Long> getNodesForLabel(Long label, int level){
+        return labelIndex.get(label).get(level).keySet();
+    }
+
     public int getBestLabelCount(Long label, int level){
      return getBestLabelCount(label, level, null);
     }
@@ -110,16 +118,32 @@ public class InvertedIndexNeighborTables extends NeighborTables {
 
 
     public int getBestLabelCount(Long label, int level, Collection<Long> skipList){
+        skipList = skipList == null ? new ArrayList<Long>(1) : skipList;
         Long bestNode = getBestLabelCountNode(label, level, skipList);
-        return  labelIndex.get(label).get(level).get(bestNode);
+//        if(bestNode == null){
+//            debug("")
+//        }
+        ArrayList<LinkedHashMap<Long, Integer>> al = labelIndex.get(label);
+        LinkedHashMap<Long, Integer>  l = al.get(level);
+        Integer count = l.get(bestNode);
+        if(count == null){
+            //throw new NullPointerException("No number for the node "+ bestNode+ " with the best count for label "+label);
+            return 0;
+        }
+
+        return  count;
     }
 
     public Long getBestLabelCountNode(Long label, int level, Collection<Long> skipList){
         Long bestNode = null;
-        int bestCount = 0;
+        int bestCount = -1;
         HashMap<Long, Integer> levelMap = labelIndex.get(label).get(level);
+        if(levelMap.isEmpty()){
+            debug("No node has %s at level %s", label, level );
+            return null;
+        }
         for(long node : levelMap.keySet()){
-            if(!skipList.contains(node)){
+            if(skipList == null || !skipList.contains(node)){
                 if( levelMap.get(node)> bestCount){
                     bestCount =  levelMap.get(node);
                     bestNode = node;
