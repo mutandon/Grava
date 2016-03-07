@@ -18,8 +18,8 @@
 package eu.unitn.disi.db.grava.vectorization;
 
 import eu.unitn.disi.db.mutilities.LoggableObject;
-import eu.unitn.disi.db.mutilities.exceptions.DataException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,7 +30,7 @@ import java.util.Set;
  * @author Davide Mottin <mottin@disi.unitn.eu>
  */
 public abstract class NeighborTables extends LoggableObject{
-    protected Map<Long, Map<Long, Integer>[]> levelTables = new HashMap<>();
+    protected Map<Long, List<Map<Long, Integer>>> levelTables = new HashMap<>();
     protected int k;
 
 
@@ -49,26 +49,25 @@ public abstract class NeighborTables extends LoggableObject{
      * @param node
      * @return
      */
-    public boolean addNodeTable(Map<Long,Integer>[] nodeTable, Long node) {
+    public boolean addNodeTable(List<Map<Long,Integer>> nodeTable, Long node) {
         boolean value = true;
-        if(nodeTable.length != this.k){
+        if(nodeTable.size() != this.k){
             throw new IllegalStateException("Node table for"+ node +" has illegal length. Expected "+ this.k+" found "+ node);
         }
 
         for (short i = 0; i < this.k; i++) {
-            value = addNodeLevelTable(nodeTable[i], node, i) && value;
+            value = addNodeLevelTable(nodeTable.get(i), node, i) && value;
         }
         return value;
     }
 
-    public abstract boolean serialize() throws DataException;
 
     /**
      *
      * @param node
      * @return Map [level]<label, count>
      */
-    public abstract Map<Long, Integer>[] getNodeMap(long node);
+    public abstract List<Map<Long, Integer>> getNodeMap(long node);
 
     public Set<Long> getNodes() {
         return levelTables.keySet();

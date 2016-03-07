@@ -18,7 +18,9 @@
 package eu.unitn.disi.db.grava.vectorization;
 
 import eu.unitn.disi.db.mutilities.exceptions.DataException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,35 +36,33 @@ public class MemoryNeighborTables extends NeighborTables {
 
     @Override
     public boolean addNodeLevelTable(Map<Long, Integer> levelNodeTable, long node, short level) {
-        Map<Long, Integer>[] nodeTable = levelTables.get(node);
+        List<Map<Long, Integer>> nodeTable = levelTables.get(node);
         if (nodeTable == null) {
-            nodeTable = new Map[k];
+            nodeTable = new ArrayList<>(k);
         }
-        nodeTable[level] = levelNodeTable;
+        nodeTable.set(level, levelNodeTable);
         return levelTables.put(node, nodeTable) != null;
     }
 
     @Override
-    public Map<Long, Integer>[] getNodeMap(long node) {
+    public List<Map<Long, Integer>> getNodeMap(long node) {
         return levelTables.get(node);
     }
 
-    @Override
-    public boolean serialize() throws DataException {
-        return false;
-    }
+    
+   
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        Map<Long, Integer>[] tables;
+        List<Map<Long, Integer>> tables;
         Map<Long, Integer> levelTable;
         for (Long l : levelTables.keySet()) {
             sb.append("Node: ").append(l).append("\n");
             tables = levelTables.get(l);
-            for (int i = 0; i < tables.length; i++) {
+            for (int i = 0; i < tables.size(); i++) {
                 sb.append("[").append(i+1).append("] {");
-                levelTable = tables[i];
+                levelTable = tables.get(i);
                 for (Long label : levelTable.keySet()) {
                     sb.append("(").append(label).append(",").append(levelTable.get(label)).append(")");
                 }

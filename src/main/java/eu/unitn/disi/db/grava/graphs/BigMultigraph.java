@@ -49,18 +49,18 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
     private int[] lastOutBounds;
     private int nodeNumber;
     private Set<Edge> edgeSet;
-    private Separator separator; 
-    private static final int SOURCE_POSITION = 0; 
-    private static final int DEST_POSITION = 1; 
-    private static final int REL_POSITION = 2; 
+    private Separator separator;
+    private static final int SOURCE_POSITION = 0;
+    private static final int DEST_POSITION = 1;
+    private static final int REL_POSITION = 2;
     //TODO: Use this
-    //private int numEdges; 
-    
+    //private int numEdges;
+
     public enum Separator {
-        SPACE(' '), 
+        SPACE(' '),
         TAB('\t');
-        
-        char delimiter; 
+
+        char delimiter;
         private Separator(char delimiter) {
             this.delimiter = delimiter;
         }
@@ -69,7 +69,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
             return delimiter;
         }
     };
-           
+
     public BigMultigraph(String graphFile) throws ParseException, IOException {
         this(graphFile, graphFile, -1, null, 1);
     }
@@ -89,23 +89,23 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         this(graphFile, graphFile, -1, null, numThreads);
     }
 
-    
+
     public BigMultigraph(String inFile, String outFile) throws ParseException, IOException {
         this(inFile, outFile, -1, null, 1);
-    } 
-    
+    }
+
     public BigMultigraph(String inFile, String outFile, int edges) throws ParseException, IOException {
         this(inFile, outFile, edges, null, 1);
     }
-    
+
     public BigMultigraph(String inFile, String outFile, Separator separator, int numThreads) throws ParseException, IOException {
         this(inFile, outFile, -1, separator, numThreads);
-    } 
+    }
 
-    
+
     /**
-     * Takes in input the non-ordered graph and orders it by source and by dest 
-     * 
+     * Takes in input the non-ordered graph and orders it by source and by dest
+     *
      * @param inFile The inbound file
      * @param outFile The outgoing file
      * @param edges Number of edges
@@ -122,7 +122,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         lastOutBounds = new int[2];
         edgeSet = null;
         this.separator = separator;
-        
+
         if (edges == -1) {
             edges = CollectionUtilities.countLines(inFile);
         }
@@ -130,11 +130,11 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         //TODO: Add a check on different sizes.
         inEdges = new long[edges][];
         outEdges = new long[edges][];
-        //If the file is the same load once and create a second array from the first array. 
+        //If the file is the same load once and create a second array from the first array.
         if (inFile.equals(outFile)) {
             warn("Loading from a single file, creating a copy of the edges and sorting.");
             loadEdges(inFile, true);
-            long[] edge; 
+            long[] edge;
             for (int i = 0; i < inEdges.length; i++) {
                 edge = inEdges[i];
                 outEdges[i] = new long[]{edge[1], edge[0], edge[2]};
@@ -144,8 +144,8 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
             loadEdges(outFile, false);
         }
         try {
-            checkSort(inEdges, true, numThreads); 
-            checkSort(outEdges, false, numThreads); 
+            checkSort(inEdges, true, numThreads);
+            checkSort(outEdges, false, numThreads);
         } catch (InterruptedException | ExecutionException ex) {
             throw new ParseException(ex);
         }
@@ -153,15 +153,15 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
 
     /*
     * Check if the arrays are sorted, sort otherwise
-    */ 
+    */
     private void checkSort(long[][] edges, boolean incoming, int numThreads) throws InterruptedException, ExecutionException {
         boolean unsorted = false;
-        long prev = Long.MIN_VALUE; 
+        long prev = Long.MIN_VALUE;
         for (long[] edge : edges) {
             if (prev <= edge[0]) {
                 prev = edge[0];
             } else {
-                unsorted = true; 
+                unsorted = true;
                 break;
             }
         }
@@ -176,7 +176,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
             } else {
                 CollectionUtilities.binaryTableSort(edges);
             }
-            
+
             info("Sorting complete");
         }
     }
@@ -192,7 +192,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
             String[] tokens;
             int count = 0;
             char delimiter = ' ';
-          
+
             if (separator == null) {
                 in.mark(2056);
                 while((line = in.readLine()) != null) {
@@ -214,15 +214,15 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
             } else {
                 delimiter = separator.delimiter;
             }
-            
+
             while((line = in.readLine()) != null) {
                 line = line.trim();
                 if (!"".equals(line) && !line.startsWith("#")) { //Comment
-                    tokens = CollectionUtilities.fastSplit(line, delimiter, 3);   
+                    tokens = CollectionUtilities.fastSplit(line, delimiter, 3);
 
                     if (tokens.length != 3) {
                         throw new ParseException("Line[%d]: %s is malformed, num tokens %d", (count + 1), line, tokens.length);
-                    }                    
+                    }
                     source = Long.parseLong(tokens[SOURCE_POSITION]);
                     dest = Long.parseLong(tokens[DEST_POSITION]);
                     label = Long.parseLong(tokens[REL_POSITION]);
@@ -378,10 +378,14 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         if (vertex != lastVertex) {
             boundsOf(edges, bounds, vertex);
         }
+
         if (bounds == null || bounds[0] == -1) {
             return null;
         }
         int length = bounds[1] - bounds[0];
+        if(length < 0){
+            return null;
+        }
         long[][] sublist = new long[length][3];
         System.arraycopy(edges, bounds[0], sublist, 0, length);
         return sublist;
@@ -520,7 +524,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
     public Iterator<Long> iterator() {
         return new NodeIterator();
     }
-    
+
     public long[][] getEdges() {
         return inEdges;
     }

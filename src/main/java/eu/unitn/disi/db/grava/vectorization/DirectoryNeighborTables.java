@@ -57,7 +57,6 @@ public class DirectoryNeighborTables extends InvertedIndexNeighborTables {
 
 
 
-    @Override
     public boolean serialize() throws DataException {
         Set<Long> labels = labelIndex.keySet();
         File labelDirectory;
@@ -98,7 +97,7 @@ public class DirectoryNeighborTables extends InvertedIndexNeighborTables {
 
 
     @Override
-    public Map<Long, Integer>[] getNodeMap(long node) {
+    public List<Map<Long, Integer>> getNodeMap(long node) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

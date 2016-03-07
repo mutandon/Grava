@@ -17,11 +17,18 @@
  */
 package eu.unitn.disi.db.grava.vectorization;
 
+import eu.unitn.disi.db.mutilities.LoggableObject;
 import eu.unitn.disi.db.mutilities.exceptions.DataException;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +36,11 @@ import java.util.Set;
 /**
  * Class that embeds the neighbor tables to be used in the neighborhood pruning
  * algorithm
+ * 
+ * Structure of The index:
+ *  - 1 file for each label-distance 
+ *  - N files, N = |labels| 
+ *  - each file contains First Long and then array of integers
  *
  * @author Davide Mottin <mottin@disi.unitn.eu>
  * @author Matteo Lissandrini <ml@disi.unitn.eu>
@@ -36,18 +48,19 @@ import java.util.Set;
  * @see GenerateNeighborTables
  */
 @PrimitiveObject
-public class InvertedIndexNeighborTables extends NeighborTables {
+public class StoredInvertedIndexNeighborTables extends NeighborTables {
     protected Map<Long, ArrayList<LinkedHashMap<Long, Integer>>> labelIndex;
 
     
 
-    public InvertedIndexNeighborTables(int k) {
+    public StoredInvertedIndexNeighborTables(int k) {
         labelIndex = new LinkedHashMap<>();
         this.k = k;
     }
 
+   
 
-
+    
     @Override
     public boolean addNodeLevelTable(Map<Long, Integer> levelNodeTable, long node, short level) {
         Set<Long> labels = levelNodeTable.keySet();
@@ -72,6 +85,7 @@ public class InvertedIndexNeighborTables extends NeighborTables {
     }
 
     
+
 
     @Override
     public List<Map<Long, Integer>> getNodeMap(long node) {
@@ -145,7 +159,82 @@ public class InvertedIndexNeighborTables extends NeighborTables {
 
 
     @Override
-    public String toString() {
+    public String toString() {                       
         return "";
     }
+    
+    
+    private static class IndexedLevelTable extends LoggableObject implements Serializable{
+
+        private static final long serialVersionUID = 1L;
+        
+        public long firstNode;
+        public int numNodes;
+        public LinkedList<Long> nodes;
+        
+        public IndexedLevelTable(){
+            nodes = new LinkedList<>();
+        }
+        
+        public IndexedLevelTable(String path){
+            throw new UnsupportedOperationException("Not implemented yet");
+        }
+        
+        public int addNode(long toInsert){                                 
+            int counter = 0;
+            for (long cur : nodes) {
+                if(cur>toInsert){
+                    break;
+                }
+                counter++;
+            }
+            nodes.add(counter, toInsert);
+
+            return counter;
+        }
+        
+        public boolean serialize(String path){
+            FileOutputStream fileOut;
+            ObjectOutputStream objOut;
+            int[] toSerialize = new int[nodes.size()+3];
+ 
+            int[] first = split(nodes.getFirst());
+            toSerialize[0] = nodes.size();
+            toSerialize[1] = first[0];
+            toSerialize[2] = first[1];
+            
+            
+            try {
+                fileOut = new FileOutputStream(path);
+                objOut = new ObjectOutputStream(fileOut);
+                objOut.writeObject(toSerialize);
+                objOut.close();
+                fileOut.close();
+            } catch (FileNotFoundException ex) {
+                error("Cannot serialize table",  ex);
+                return false;
+            } catch (IOException ex) {
+                error("Cannot serialize table", ex);
+                return false;
+            }
+
+            return true;
+        }
+        
+        
+        public static int[] split(long toSplit){
+            int[] splitted = new int[2];
+            
+            splitted[0] = (int)(toSplit >> 32);
+            splitted[1] = (int)toSplit;  
+     
+            return splitted;
+        }
+        
+        public static long join(int left, int right){
+            return    (long)left << 32 | right & 0xFFFFFFFFL;
+        }
+        
+    }
+    
 }
