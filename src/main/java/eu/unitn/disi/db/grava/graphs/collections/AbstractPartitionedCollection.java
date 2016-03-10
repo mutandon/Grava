@@ -49,7 +49,7 @@ public abstract class AbstractPartitionedCollection<E>
     
     @Override
     public Iterator<E> iterator() {
-        return new PartitionIterator<E>();
+        return new PartitionIterator<>();
     }
 
     protected class PartitionIterator<E> implements Iterator<E> {

@@ -56,6 +56,23 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
     //TODO: Use this
     //private int numEdges;
 
+    @Override
+    public Collection<Edge> getEdge(Long src, Long dest) throws NullPointerException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean containsEdge(Long sourceVertex, Long targetVertex) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Collection<Edge> edgesOf(Long id) throws NullPointerException {
+        Collection<Edge> totalEdges = incomingEdgesOf(id);
+        totalEdges.addAll(outgoingEdgesOf(id));
+        return totalEdges; 
+    }
+
     public enum Separator {
         SPACE(' '),
         TAB('\t');

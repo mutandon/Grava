@@ -25,7 +25,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Partitioned Set containes a set of sets, in order to keep objects into 
+ * Partitioned Set contains a set of sets, in order to keep objects into 
  * different partitions. 
  * 
  * @author Davide Mottin <mottin@disi.unitn.eu>

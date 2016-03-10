@@ -105,5 +105,7 @@ public class Edge {
         return src + "-[" + rel + "]->" + dest;
     }
     
-    
+    public Edge reversedEdge() {
+        return new Edge(dest, src, rel);
+    }
 }

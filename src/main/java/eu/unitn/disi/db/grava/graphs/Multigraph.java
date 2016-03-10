@@ -169,7 +169,41 @@ public interface Multigraph extends Iterable<Long> {
      * Check if the input vertex is contained in the Multigraph
      * @param vertex The input vertex to be checked
      * @return True if it contains the node, false otherwise
-     * @throws NullPointerException If the vertwx is null
+     * @throws NullPointerException If the vertex is null
      */
     public boolean containsVertex(Long vertex) throws NullPointerException;
+    
+    /** 
+     * Get the edges between source and destination
+     * @param src The source node
+     * @param dest The destination node
+     * @return The edges between source and destination
+     * @throws NullPointerException If either src or dest are null
+     */
+    public Collection<Edge> getEdge(Long src, Long dest) throws NullPointerException;
+    
+    
+    /**
+     * Returns <tt>true</tt> if and only if this graph contains an edge going
+     * from the source vertex to the target vertex. In undirected graphs the
+     * same result is obtained when source and target are inverted. If any of
+     * the specified vertices does not exist in the graph, or if is <code>
+     * null</code>, returns <code>false</code>.
+     *
+     * @param src source vertex of the edge.
+     * @param dest target vertex of the edge.
+     *
+     * @return <tt>true</tt> if this graph contains the specified edge.
+     */
+    public boolean containsEdge(Long src, Long dest);
+    
+    
+    /**
+     * Return the edges (incoming and outgoing) of a specific node. 
+     * @param id The id of the node
+     * @return The set of edges associated with the input node
+     * @throws NullPointerException If the id is null
+     */
+    public Collection<Edge> edgesOf(Long id) throws NullPointerException;
+    
 }

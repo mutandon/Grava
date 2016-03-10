@@ -18,7 +18,6 @@
 package eu.unitn.disi.db.grava.vectorization;
 
 import eu.unitn.disi.db.mutilities.LoggableObject;
-import eu.unitn.disi.db.mutilities.exceptions.DataException;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;

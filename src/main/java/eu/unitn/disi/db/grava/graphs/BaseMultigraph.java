@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -41,13 +42,11 @@ public class BaseMultigraph implements Multigraph {
 
     protected Map<Long, EdgeContainer> nodeEdges;
     protected Collection<Edge> edges;
-
-    //Used to initialize ArrayList of Out/In Edges
-    private int avgNodeDegree;
-
     private static final int DEFAULT_CAPACITY = 16;
     private static final float DEFAULT_DEGREE = 1f;
-
+    
+    protected int avgNodeDegree; 
+    
     /**
      * Construct a multigraph that  has an initial
      * capacity of 2
@@ -55,6 +54,7 @@ public class BaseMultigraph implements Multigraph {
     public BaseMultigraph() {
         this(DEFAULT_CAPACITY, DEFAULT_DEGREE);
     }
+    
 
     public BaseMultigraph(int capacity) {
         this(capacity, DEFAULT_DEGREE);
@@ -94,7 +94,7 @@ public class BaseMultigraph implements Multigraph {
      * @param src The source node in this directed multigraph
      * @param dest The dest node in this directed multigraph
      * @param label The label of the edge to be created
-     * @throws IllegalArgumentException If src and edges are not present in the
+     * @throws IllegalArgumentException If src and dest are not present in the
      * vertex collection
      */
     @Override
@@ -290,9 +290,8 @@ public class BaseMultigraph implements Multigraph {
     @Override
     public int numberOfNodes() {
         return nodeEdges.size();
-    }
-
-
+    }    
+    
     @Override
     public void removeEdge(Long src, Long dest, Long label) throws IllegalArgumentException, NullPointerException {
         removeEdge(new Edge(src,dest,label));
@@ -309,6 +308,31 @@ public class BaseMultigraph implements Multigraph {
     @Override
     public int numberOfEdges() {
         return edges.size();
+    }
+
+    @Override
+    public Collection<Edge> getEdge(Long src, Long dest) throws NullPointerException {
+        Collection<Edge> outgoing = nodeEdges.get(src).getOutgoing(); 
+        Collection<Edge> foundEdges = new ArrayList<>(); 
+        
+        for (Edge e : outgoing) {
+            if (Objects.equals(e.getDestination(), dest)) {
+                foundEdges.add(e);
+            }
+        }
+        return foundEdges; 
+    }
+
+    @Override
+    public boolean containsEdge(Long sourceVertex, Long targetVertex) {
+        return !getEdge(sourceVertex, targetVertex).isEmpty();
+    }
+
+    @Override
+    public Collection<Edge> edgesOf(Long id) throws NullPointerException {
+        Collection<Edge> totalEdges = incomingEdgesOf(id);
+        totalEdges.addAll(outgoingEdgesOf(id));
+        return totalEdges; 
     }
 
 
