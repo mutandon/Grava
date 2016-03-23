@@ -17,223 +17,128 @@
  */
 package eu.unitn.disi.db.grava.vectorization;
 
-import eu.unitn.disi.db.mutilities.LoggableObject;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+
+
+import eu.unitn.disi.db.grava.vectorization.storage.StorableTable;
+import java.io.File;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * Class that embeds the neighbor tables to be used in the neighborhood pruning
  * algorithm
- * 
- * Structure of The index:
- *  - 1 file for each label-distance 
- *  - N files, N = |labels| 
- *  - each file contains First Long and then array of integers
+ *
+ * Structure of The index: - 1 file for each label-distance - N files, N =
+ * |labels| - each file contains First Long and then array of integers
  *
  * @author Davide Mottin <mottin@disi.unitn.eu>
  * @author Matteo Lissandrini <ml@disi.unitn.eu>
  * @see NeighborhoodPruningAlgorithm
  * @see GenerateNeighborTables
  */
-@PrimitiveObject
-public class StoredInvertedIndexNeighborTables extends NeighborTables {
-    protected Map<Long, ArrayList<LinkedHashMap<Long, Integer>>> labelIndex;
+public class StoredInvertedIndexNeighborTables extends InvertedIndexNeighborTables {
 
-    
+    private final String dirPath;
 
-    public StoredInvertedIndexNeighborTables(int k) {
-        labelIndex = new LinkedHashMap<>();
-        this.k = k;
-    }
-
-   
-
-    
-    @Override
-    public boolean addNodeLevelTable(Map<Long, Integer> levelNodeTable, long node, short level) {
-        Set<Long> labels = levelNodeTable.keySet();
-        ArrayList<LinkedHashMap<Long, Integer>> labelNodes;
-        boolean retval = true;
-        for (Long label : labels) {
-            labelNodes = labelIndex.get(label);
-
-            if (labelNodes == null) {
-                labelNodes = new ArrayList<>(k);
-            }
-            if(labelNodes.isEmpty()){
-                for (int i = 0; i < k; i++) {
-                    labelNodes.add(new LinkedHashMap<Long, Integer>());
-                }
-            }
-
-            labelNodes.get(level).put(node, levelNodeTable.get(label)); //node[tab]count
-            labelIndex.put(label, labelNodes);
+    /**
+     * LabelID -> NodesList NodesList: NodeID -> NumLabels
+     */
+    //protected Map<Long, ArrayList<LinkedHashMap<Long, Integer>>> labelIndex;
+    /**
+     *
+     * @param k
+     * @param dirPath
+     * @throws java.io.IOException
+     */
+    public StoredInvertedIndexNeighborTables(int k, String dirPath) throws IOException {
+        super(k);
+        // First, make sure the path exists
+        File savingDir = new File(dirPath);
+        // This will tell you if it is a directory
+        if (!savingDir.exists() || !savingDir.isDirectory() || !savingDir.canWrite()) {
+            throw new IOException("Illegal directory path");
         }
-        return retval;
+        this.dirPath = dirPath;
     }
 
     
 
-
-    @Override
-    public List<Map<Long, Integer>> getNodeMap(long node) {
-        Set<Long> labels = labelIndex.keySet();
-        List<Map<Long, Integer>> nodeTable = new ArrayList<>(k); // [level]<label,count>
-
-        for(Long label : labels ){
-            List<LinkedHashMap<Long, Integer>> labelNodes = labelIndex.get(label); //[level]<node,count>
-
-            for(int i = 0; i < labelNodes.size(); i++ ){
-                Map<Long, Integer> labelCounts = nodeTable.get(i);
-                if( labelCounts == null){
-                    labelCounts = new HashMap<>();
-                    nodeTable.set(i, labelCounts);
-                }
-                Integer ct =  labelNodes.get(i).get(node);
-                labelCounts.put(label, ct == null ? 0 : ct);
-            }
-
-        }
-
-        return nodeTable;
-    }
-
-    public Set<Long> getNodesForLabel(Long label, int level){
-        return labelIndex.get(label).get(level).keySet();
-    }
-
-    public int getBestLabelCount(Long label, int level){
-     return getBestLabelCount(label, level, null);
-    }
-
-
-
-    public int getBestLabelCount(Long label, int level, Collection<Long> skipList){
+    public boolean hasStored(long label) throws IOException{
+        StorableTable tb;
         
-        Long bestNode = getBestLabelCountNode(label, level, skipList == null ? new ArrayList<Long>(1) : skipList);
-//        if(bestNode == null){
-//            debug("")
-//        }
-        ArrayList<LinkedHashMap<Long, Integer>> al = labelIndex.get(label);
-        LinkedHashMap<Long, Integer>  l = al.get(level);
-        Integer count = l.get(bestNode);
-        if(count == null){
-            //throw new NullPointerException("No number for the node "+ bestNode+ " with the best count for label "+label);
-            return 0;
-        }
-
-        return  count;
+        tb = new StorableTable(dirPath, label, 0);
+                
+        return tb.isStored();
     }
+    
 
-    public Long getBestLabelCountNode(Long label, int level, Collection<Long> skipList){
-        Long bestNode = null;
-        int bestCount = -1;
-        HashMap<Long, Integer> levelMap = labelIndex.get(label).get(level);
-        if(levelMap.isEmpty()){
-            debug("No node has %s at level %s", label, level );
+    
+    /**
+     * load label table from file and overwrites to current index
+     * @param label
+     * @return true if label has been successfully loaded from file
+     * @throws IOException 
+     */
+    public boolean load(Long label) throws IOException {
+        StorableTable tb;
+        ArrayList<LinkedHashMap<Long, Integer>> toAdd = new ArrayList<>();
+        
+
+        for (int i = 0; i < this.k; i++) {
+            tb = new StorableTable(dirPath, label, i);
+            //TODO: Parallel
+            if(!tb.load()){
+                return false;
+            }
+            
+            nodes.addAll(tb.getNodes());
+            toAdd.add(tb.getNodesMap());
+        }
+        
+        labelIndex.put(label, toAdd);
+        ///////
+        return true;
+    }
+    
+    public void store() throws IOException{
+        StorableTable tb;
+        ArrayList<LinkedHashMap<Long, Integer>> levels;
+        int lv;
+        for (Entry<Long, ArrayList<LinkedHashMap<Long, Integer>>> e : this.labelIndex.entrySet()) {
+            levels = e.getValue();
+            lv = 0;
+            for (LinkedHashMap<Long, Integer> table : levels) {
+                tb = new StorableTable(dirPath, e.getKey(), lv);
+                tb.putAll(table);
+                tb.save();                
+            }            
+        }               
+    }
+    
+    
+    
+    /**
+     *
+     * @param label
+     * @return null if loading raised an exception or table has not been stored
+     */
+    private ArrayList<LinkedHashMap<Long, Integer>> getOrLoad(Long label) {
+        try {
+            if (!labelIndex.containsKey(label)) {
+               if(!this.load(label)){
+                   return null;
+               }
+            }
+        } catch (IOException ex) {
+            error("Could not load table file", ex);
             return null;
         }
-        for(long node : levelMap.keySet()){
-            if(skipList == null || !skipList.contains(node)){
-                if( levelMap.get(node)> bestCount){
-                    bestCount =  levelMap.get(node);
-                    bestNode = node;
-                }
-            }
-        }
-        return  bestNode;
+        return labelIndex.get(label);
     }
 
-
-
-    @Override
-    public String toString() {                       
-        return "";
-    }
     
     
-    private static class IndexedLevelTable extends LoggableObject implements Serializable{
-
-        private static final long serialVersionUID = 1L;
-        
-        public long firstNode;
-        public int numNodes;
-        public LinkedList<Long> nodes;
-        
-        public IndexedLevelTable(){
-            nodes = new LinkedList<>();
-        }
-        
-        public IndexedLevelTable(String path){
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
-        
-        public int addNode(long toInsert){                                 
-            int counter = 0;
-            for (long cur : nodes) {
-                if(cur>toInsert){
-                    break;
-                }
-                counter++;
-            }
-            nodes.add(counter, toInsert);
-
-            return counter;
-        }
-        
-        public boolean serialize(String path){
-            FileOutputStream fileOut;
-            ObjectOutputStream objOut;
-            int[] toSerialize = new int[nodes.size()+3];
- 
-            int[] first = split(nodes.getFirst());
-            toSerialize[0] = nodes.size();
-            toSerialize[1] = first[0];
-            toSerialize[2] = first[1];
-            
-            
-            try {
-                fileOut = new FileOutputStream(path);
-                objOut = new ObjectOutputStream(fileOut);
-                objOut.writeObject(toSerialize);
-                objOut.close();
-                fileOut.close();
-            } catch (FileNotFoundException ex) {
-                error("Cannot serialize table",  ex);
-                return false;
-            } catch (IOException ex) {
-                error("Cannot serialize table", ex);
-                return false;
-            }
-
-            return true;
-        }
-        
-        
-        public static int[] split(long toSplit){
-            int[] splitted = new int[2];
-            
-            splitted[0] = (int)(toSplit >> 32);
-            splitted[1] = (int)toSplit;  
-     
-            return splitted;
-        }
-        
-        public static long join(int left, int right){
-            return    (long)left << 32 | right & 0xFFFFFFFFL;
-        }
-        
-    }
     
 }
