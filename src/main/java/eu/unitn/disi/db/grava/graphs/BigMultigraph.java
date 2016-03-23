@@ -40,7 +40,8 @@ import java.util.concurrent.ExecutionException;
  *
  * @author Davide Mottin <mottin@disi.unitn.eu>
  */
-public class BigMultigraph extends LoggableObject implements Multigraph, Iterable<Long>  {
+public class BigMultigraph extends LoggableObject implements Multigraph, Iterable<Long> {
+
     private long[][] inEdges;
     private long[][] outEdges;
     private long lastInVertex;
@@ -49,10 +50,13 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
     private int[] lastOutBounds;
     private int nodeNumber;
     private Set<Edge> edgeSet;
+    private Set<Long> labelSet;
     private Separator separator;
     private static final int SOURCE_POSITION = 0;
     private static final int DEST_POSITION = 1;
     private static final int REL_POSITION = 2;
+    private static final int LOG_MARK = 50000000;
+    private static final int LABELS = 10000;
     //TODO: Use this
     //private int numEdges;
 
@@ -78,6 +82,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         TAB('\t');
 
         char delimiter;
+
         private Separator(char delimiter) {
             this.delimiter = delimiter;
         }
@@ -94,18 +99,14 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
     /**
      * Takes in input the non-ordered graph and orders it by source and by dest
      *
-     * @param inFile
-     * @param outFile
-     * @param edges
-     * @param sort
+     * @param graphFile
+     * @param numThreads
      * @throws ParseException
      * @throws IOException
      */
-
     public BigMultigraph(String graphFile, int numThreads) throws ParseException, IOException {
         this(graphFile, graphFile, -1, null, numThreads);
     }
-
 
     public BigMultigraph(String inFile, String outFile) throws ParseException, IOException {
         this(inFile, outFile, -1, null, 1);
@@ -119,7 +120,6 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         this(inFile, outFile, -1, separator, numThreads);
     }
 
-
     /**
      * Takes in input the non-ordered graph and orders it by source and by dest
      *
@@ -131,22 +131,21 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
      * @throws ParseException The input file is malformed
      * @throws IOException The input file is not readable
      */
-    private BigMultigraph(String inFile, String outFile, int edges, Separator separator, int numThreads) throws ParseException, IOException {
-        lastInVertex = -1;
-        lastOutVertex = -1;
-        nodeNumber = -1;
-        lastInBounds = new int[2];
-        lastOutBounds = new int[2];
-        edgeSet = null;
+    private BigMultigraph(String inFile, String outFile, int nEdges, Separator separator, int numThreads) throws ParseException, IOException {
+        this.lastInVertex = -1;
+        this.lastOutVertex = -1;
+        this.nodeNumber = -1;
+        this.lastInBounds = new int[2];
+        this.lastOutBounds = new int[2];
+        this.edgeSet = null;
+        this.labelSet = new HashSet<>(LABELS);
         this.separator = separator;
 
-        if (edges == -1) {
-            edges = CollectionUtilities.countLines(inFile);
-        }
+        int numEdges = nEdges > 0 ? nEdges : CollectionUtilities.countLines(inFile);
 
         //TODO: Add a check on different sizes.
-        inEdges = new long[edges][];
-        outEdges = new long[edges][];
+        inEdges = new long[numEdges][];
+        outEdges = new long[numEdges][];
         //If the file is the same load once and create a second array from the first array.
         if (inFile.equals(outFile)) {
             warn("Loading from a single file, creating a copy of the edges and sorting.");
@@ -170,7 +169,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
 
     /*
     * Check if the arrays are sorted, sort otherwise
-    */
+     */
     private void checkSort(long[][] edges, boolean incoming, int numThreads) throws InterruptedException, ExecutionException {
         boolean unsorted = false;
         long prev = Long.MIN_VALUE;
@@ -212,7 +211,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
 
             if (separator == null) {
                 in.mark(2056);
-                while((line = in.readLine()) != null) {
+                while ((line = in.readLine()) != null) {
                     if (!"".equals(line) && !line.startsWith("#")) { //Comment
                         tokens = CollectionUtilities.fastSplit(line, ' ', 3); // try to split on whitespace
                         delimiter = ' ';
@@ -232,7 +231,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
                 delimiter = separator.delimiter;
             }
 
-            while((line = in.readLine()) != null) {
+            while ((line = in.readLine()) != null) {
                 line = line.trim();
                 if (!"".equals(line) && !line.startsWith("#")) { //Comment
                     tokens = CollectionUtilities.fastSplit(line, delimiter, 3);
@@ -251,7 +250,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
 
                 }
                 count++;
-                if (count % 50000000 == 0) {
+                if (count % LOG_MARK == 0) {
                     info("Processed %d lines of %s\n", count, edgeFile);
                 }
             }
@@ -274,7 +273,6 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
     public void addEdge(Edge edge) throws IllegalArgumentException, NullPointerException {
         throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed.");
     }
-
 
     public void setEdges(long[][] inEdges, long[][] outEdges) {
         lastInVertex = -1;
@@ -317,27 +315,26 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         return inEdges.length;
     }
 
-
     @Override
     public Collection<Edge> edgeSet() {
         if (edgeSet == null) {
             edgeSet = new HashSet<>();
-            for (int i = 0; i < outEdges.length; i++) {
-                edgeSet.add(new Edge(outEdges[i][0], outEdges[i][1], outEdges[i][2]));
+            for (long[] outEdge : outEdges) {
+                edgeSet.add(new Edge(outEdge[0], outEdge[1], outEdge[2]));
             }
         }
         return edgeSet;
     }
 
     @Override
-    public int inDegreeOf(Long vertex) throws NullPointerException {
+    public synchronized int inDegreeOf(Long vertex) throws NullPointerException {
         int degree = degreeOf(inEdges, lastInBounds, vertex, lastInVertex);
         lastInVertex = vertex;
         return degree;
     }
 
     @Override
-    public int outDegreeOf(Long vertex) throws NullPointerException {
+    public synchronized int outDegreeOf(Long vertex) throws NullPointerException {
         int degree = degreeOf(outEdges, lastOutBounds, vertex, lastOutVertex);
         lastOutVertex = vertex;
         return degree;
@@ -348,8 +345,8 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         Collection<Edge> edges = new ArrayList<>();
         long[][] aEdges = incomingArrayEdgesOf(vertex);
         if (aEdges != null) {
-            for (int i = 0; i < aEdges.length; i++) {
-                edges.add(new Edge(aEdges[i][1],vertex,aEdges[i][2]));
+            for (long[] aEdge : aEdges) {
+                edges.add(new Edge(aEdge[1], vertex, aEdge[2]));
             }
         }
         return edges;
@@ -360,8 +357,8 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         Collection<Edge> edges = new ArrayList<>();
         long[][] aEdges = outgoingArrayEdgesOf(vertex);
         if (aEdges != null) {
-            for (int i = 0; i < aEdges.length; i++) {
-                edges.add(new Edge(vertex, aEdges[i][1],aEdges[i][2]));
+            for (long[] aEdge : aEdges) {
+                edges.add(new Edge(vertex, aEdge[1], aEdge[2]));
             }
         }
         return edges;
@@ -369,10 +366,11 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
 
     /**
      * Given a node returns an array of dest,source,label in a long format
+     *
      * @param vertex The vertex to find the incoming edges
      * @return An array of dest,source,label arrays
      */
-    public long[][] incomingArrayEdgesOf(long vertex) {
+    public synchronized long[][] incomingArrayEdgesOf(long vertex) {
         long[][] edges = edgesOf(inEdges, lastInBounds, vertex, lastInVertex);
         lastInVertex = vertex;
         return edges;
@@ -380,18 +378,17 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
 
     /**
      * Given a node returns an array of source,dest,label in a long format
+     *
      * @param vertex The vertex to find the outgoing edges
      * @return An array of source,dest,label arrays
      */
-
-    public long[][] outgoingArrayEdgesOf(long vertex) {
+    public synchronized long[][] outgoingArrayEdgesOf(long vertex) {
         long[][] edges = edgesOf(outEdges, lastOutBounds, vertex, lastOutVertex);
         lastOutVertex = vertex;
         return edges;
     }
 
-
-    private static long[][] edgesOf(long[][] edges, int[] bounds, long vertex, long lastVertex) {
+    private synchronized static long[][] edgesOf(long[][] edges, int[] bounds, long vertex, long lastVertex) {
         if (vertex != lastVertex) {
             boundsOf(edges, bounds, vertex);
         }
@@ -400,7 +397,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
             return null;
         }
         int length = bounds[1] - bounds[0];
-        if(length < 0){
+        if (length < 0) {
             return null;
         }
         long[][] sublist = new long[length][3];
@@ -408,7 +405,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         return sublist;
     }
 
-    private static int degreeOf(long[][] edges, int[] bounds, long vertex, long lastVertex) {
+    private synchronized static int degreeOf(long[][] edges, int[] bounds, long vertex, long lastVertex) {
         if (vertex != lastVertex) {
             boundsOf(edges, bounds, vertex);
         }
@@ -418,13 +415,17 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         return bounds[1] - bounds[0];
     }
 
-    private static void boundsOf(long[][] edges, int[] bounds, long vertex) {
+    private synchronized static void boundsOf(long[][] edges, int[] bounds, long vertex) {
         int i;
         int startingIndex = CollectionUtilities.binaryTableSearch(edges, vertex);
         if (startingIndex >= 0) {
             i = startingIndex;
-            while (i < edges.length && edges[i][0] == vertex) { i++; }
-            while (startingIndex >= 0 && edges[startingIndex][0] == vertex) { --startingIndex;}
+            while (i < edges.length && edges[i][0] == vertex) {
+                i++;
+            }
+            while (startingIndex >= 0 && edges[startingIndex][0] == vertex) {
+                --startingIndex;
+            }
             bounds[0] = startingIndex + 1;
             bounds[1] = i;
         } else {
@@ -432,7 +433,6 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
             bounds[1] = -1;
         }
     }
-
 
     @Override
     public BaseMultigraph merge(BaseMultigraph graph) throws NullPointerException, ExecutionException {
@@ -447,7 +447,8 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
 
     @Override
     public void removeVertex(Long id) throws NullPointerException {
-        throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed.");    }
+        throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed.");
+    }
 
     @Override
     public void removeEdge(Long src, Long dest, Long label) throws IllegalArgumentException, NullPointerException {
@@ -459,8 +460,18 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed.");
     }
 
+    @Override
+    public Collection<Long> labelSet() {
+        if (this.labelSet.isEmpty()) {
+            for (long[] outEdge : outEdges) {
+                labelSet.add(outEdge[2]);
+            }
+        }
+        return this.labelSet;
+    }
 
     private class NodeIterator implements Iterator<Long> {
+
         //Take into account the index in the inEdges and in the outEdges
         private int indexIn;
         private int indexOut;
@@ -472,11 +483,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
 
         @Override
         public boolean hasNext() {
-            if (indexIn < inEdges.length)
-                return true;
-            if (indexOut < outEdges.length)
-                return true;
-            return false;
+            return indexIn < inEdges.length || indexOut < outEdges.length;
         }
 
         @Override
@@ -492,7 +499,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
                     index = searchNext(inEdges, indexIn, inEdges[indexIn][0]);
                     value = inEdges[indexIn][0];
                     indexIn = index;
-                } else  {
+                } else {
                     long valueIn = inEdges[indexIn][0];
                     long valueOut = outEdges[indexOut][0];
 
@@ -511,7 +518,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
                         index = searchNext(outEdges, indexOut, valueOut);
                         valueOut = outEdges[indexOut][0];
                         indexOut = index;
-                        value = valueIn < valueOut? valueIn : valueOut;
+                        value = valueIn < valueOut ? valueIn : valueOut;
                     }
                 }
                 return value;
