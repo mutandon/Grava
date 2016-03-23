@@ -41,8 +41,7 @@ public class BaseMultigraph implements Multigraph {
     private static final int MIN_SIZE_PARALLELIZATION = 2000;
 
     protected Map<Long, EdgeContainer> nodeEdges;
-    protected Collection<Edge> edges;
-    protected Collection<Long> labels;
+    protected Collection<Edge> edges;    
 
     
     //Used to initialize ArrayList of Out/In Edges
@@ -344,11 +343,13 @@ public class BaseMultigraph implements Multigraph {
         
     @Override
     public Collection<Long> labelSet() {
-        this.labels = new HashSet<>();
+
+        HashSet<Long> labels = new HashSet<>();
         for (Edge e : edges) {
-            this.labels.add(e.getLabel());            
+            labels.add(e.getLabel());            
         }
-        return this.labels;
+
+        return labels;
     }
 
 
