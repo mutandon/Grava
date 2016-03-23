@@ -49,7 +49,7 @@ public class NodeVectors implements Closeable {
     private int numberOfNodes;
     private long lastRead = -1;
     private int k;
-    protected Map<Long, Map<Long, Integer>[]> levelTables = new LinkedHashMap<Long, Map<Long, Integer>[]>(); //Preserve the order
+    protected Map<Long, Map<Long, Integer>[]> levelTables = new LinkedHashMap<>(); //Preserve the order
     private Map<Long, Double> labelFrequencies;
     private long[][] index = null;
     //private int edgeNumber;
@@ -59,7 +59,7 @@ public class NodeVectors implements Closeable {
 
         WRITE("rw"),
         READ("r");
-        private String m;
+        private final String m;
 
         Mode(String m) {
             this.m = m;
@@ -176,7 +176,7 @@ public class NodeVectors implements Closeable {
                 line = vectorFile.readLine();
                 //debug("First line is %s", line);
                 if (line != null) {
-                    vector = new HashMap<Long, Double>();
+                    vector = new HashMap<>();
                     line = line.substring(1); //remove %
                     while (line != null && !line.startsWith("%")) {
                         splittedLine = CollectionUtilities.fastSplit(line, ' ', 2);
@@ -226,10 +226,11 @@ public class NodeVectors implements Closeable {
         Arrays.sort(index, new Comparator<long[]>(){
             @Override
             public int compare(long[] o1, long[] o2) {
-                if (o1[0] > o2[0]) 
-                    return 1; 
-                else if (o1[0] < o2[0])
-                    return -1; 
+                if (o1[0] > o2[0]) {
+                    return 1;
+                } else if (o1[0] < o2[0]) {
+                    return -1;
+                } 
                 return 0;
             }
         });

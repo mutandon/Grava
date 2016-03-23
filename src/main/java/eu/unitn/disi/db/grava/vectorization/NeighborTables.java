@@ -18,7 +18,6 @@
 package eu.unitn.disi.db.grava.vectorization;
 
 import eu.unitn.disi.db.mutilities.LoggableObject;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,39 +28,27 @@ import java.util.Set;
  *
  * @author Davide Mottin <mottin@disi.unitn.eu>
  */
-public abstract class NeighborTables extends LoggableObject{
-    protected Map<Long, List<Map<Long, Integer>>> levelTables = new HashMap<>();
+public abstract class NeighborTables extends LoggableObject{    
+    //Max Depth
     protected int k;
 
 
+    /**
+     * 
+     * @return set of nodes mapped in this table
+     */
+    public abstract Set<Long> getNodes();
+    
     /**
      *
      * @param levelNodeTable <label, count>
      * @param node
      * @param level
-     * @return
+     * @return true if some table has been overwritten
      */
     public abstract boolean addNodeLevelTable(Map<Long,Integer> levelNodeTable, long node, short level);
 
-    /**
-     *
-     * @param nodeTable [level]<label, count>
-     * @param node
-     * @return
-     */
-    public boolean addNodeTable(List<Map<Long,Integer>> nodeTable, Long node) {
-        boolean value = true;
-        if(nodeTable.size() != this.k){
-            throw new IllegalStateException("Node table for"+ node +" has illegal length. Expected "+ this.k+" found "+ node);
-        }
-
-        for (short i = 0; i < this.k; i++) {
-            value = addNodeLevelTable(nodeTable.get(i), node, i) && value;
-        }
-        return value;
-    }
-
-
+   
     /**
      *
      * @param node
@@ -69,18 +56,52 @@ public abstract class NeighborTables extends LoggableObject{
      */
     public abstract List<Map<Long, Integer>> getNodeMap(long node);
 
-    public Set<Long> getNodes() {
-        return levelTables.keySet();
-    }
-
-    public void merge(NeighborTables tables) {
-        Set<Long> nodes = tables.getNodes();
-
-        for (Long node : nodes) {
-            addNodeTable(tables.getNodeMap(node), node);
-        }
-    }
-
+    
+           
     @Override
     public abstract String toString();
+    
+    
+    /**
+     *
+     * @param nodeTable [level]<label, count>
+     * @param node
+     * @return true if it overwrites previous table for node
+     */
+    public boolean addNodeTable(List<Map<Long,Integer>> nodeTable, Long node) {
+        boolean value = false;
+        if(nodeTable.size() != this.k){
+            throw new IllegalStateException("Node table for"+ node +" has illegal length. Expected "+ this.k+" found "+ nodeTable.size());
+        }
+
+        for (short i = 0; i < this.k; i++) {
+            value = addNodeLevelTable(nodeTable.get(i), node, i) || value;
+        }
+        return value;
+    }
+    
+    
+    /**
+     * Merge a table into this one
+     * @param tables 
+     * @return  true if it overwrites any previous table
+     */
+    public boolean merge(NeighborTables tables) {
+        Set<Long> nodes = tables.getNodes();
+        boolean value = false;
+        for (Long node : nodes) {
+           value =  addNodeTable(tables.getNodeMap(node), node) || value;
+        }
+        return value;
+    }
+
+    
+    
+    protected void checkLevel(int level){
+        if(level < 0 || level > this.k){
+            throw new IndexOutOfBoundsException("Maximum level is "+this.k+" requsted "+level );
+        }        
+    }        
+    
+    
 }

@@ -110,6 +110,13 @@ public interface Multigraph extends Iterable<Long> {
     public Collection<Edge> edgeSet();
 
     /**
+     * Returns the set of labels in the graph
+     * @return The set of labels
+     */
+    public Collection<Long> labelSet();
+
+    
+    /**
      * Returns the "in degree" of the specified vertex. An in degree of a
      * vertex in a directed graph is the number of incoming directed edges from
      * that vertex. See <a href="http://mathworld.wolfram.com/Indegree.html">

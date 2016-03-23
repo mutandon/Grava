@@ -42,10 +42,16 @@ public class BaseMultigraph implements Multigraph {
 
     protected Map<Long, EdgeContainer> nodeEdges;
     protected Collection<Edge> edges;
+    protected Collection<Long> labels;
+
+    
+    //Used to initialize ArrayList of Out/In Edges
+    private int avgNodeDegree;
+
+
     private static final int DEFAULT_CAPACITY = 16;
     private static final float DEFAULT_DEGREE = 1f;
     
-    protected int avgNodeDegree; 
     
     /**
      * Construct a multigraph that  has an initial
@@ -298,6 +304,7 @@ public class BaseMultigraph implements Multigraph {
     }
 
 
+    @Override
     public void removeEdge(Edge edge) throws IllegalArgumentException, NullPointerException {
         edges.remove(edge);
         nodeEdges.get(edge.getSource()).getOutgoing().remove(edge);
@@ -333,6 +340,15 @@ public class BaseMultigraph implements Multigraph {
         Collection<Edge> totalEdges = incomingEdgesOf(id);
         totalEdges.addAll(outgoingEdgesOf(id));
         return totalEdges; 
+    }
+        
+    @Override
+    public Collection<Long> labelSet() {
+        this.labels = new HashSet<>();
+        for (Edge e : edges) {
+            this.labels.add(e.getLabel());            
+        }
+        return this.labels;
     }
 
 
@@ -375,10 +391,10 @@ public class BaseMultigraph implements Multigraph {
      * have better results
      */
     private class AddToCollection implements Runnable {
-        private Collection coll;
-        private BaseMultigraph graph;
+        private final Collection<Edge> coll;
+        private final BaseMultigraph graph;
 
-        public AddToCollection(Collection coll, BaseMultigraph graph) {
+        public AddToCollection(Collection<Edge> coll, BaseMultigraph graph) {
             this.coll = coll;
             this.graph = graph;
             //this.isVertex = isVertex;
@@ -391,7 +407,7 @@ public class BaseMultigraph implements Multigraph {
     }
 
     private class AddToMap implements Runnable {
-        private BaseMultigraph graph;
+        private final BaseMultigraph graph;
 
         public AddToMap(BaseMultigraph graph) {
             this.graph = graph;
