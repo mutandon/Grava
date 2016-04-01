@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Kuzeko
+ * Copyright (C) 2016 Matteo Lissandrini
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@ package eu.unitn.disi.db.grava.graphs;
 
 /**
  *
- * @author Kuzeko
+ * @author Matteo Lissandrini
  */
 public class WeightedEdge extends Edge {
     
