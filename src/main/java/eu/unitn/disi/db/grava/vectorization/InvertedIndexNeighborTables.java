@@ -60,6 +60,14 @@ public class InvertedIndexNeighborTables extends NeighborTables {
               
     }
     
+    /**
+     * 
+     * @return  the number of labels mapped
+     */
+    public int size(){
+        return this.labelIndex.size();
+    }
+    
     public boolean hasMapped(long label){
         return this.labelIndex.containsKey(label);
     }
@@ -143,8 +151,10 @@ public class InvertedIndexNeighborTables extends NeighborTables {
         for (int i = 0; i < k; i++) {
             Map<Long, Integer> levelMap = labelNodes.get(i);
             for (Entry<Long, Integer> e : nodesMap.get(i).entrySet()) {
-                this.nodes.add(e.getKey());
-                retval = retval || null != levelMap.put(e.getKey(), e.getValue());
+                if(e.getValue() > 0){
+                    this.nodes.add(e.getKey());
+                    retval = retval || null != levelMap.put(e.getKey(), e.getValue());
+                }
             }            
         }
         return retval;
@@ -153,6 +163,10 @@ public class InvertedIndexNeighborTables extends NeighborTables {
     
     @Override
     public boolean addNodeLevelTable(Map<Long, Integer> levelNodeTable, long node, short level) {
+        if(levelNodeTable.size() <1) {
+            return false;
+        }
+            
         Set<Long> labels = levelNodeTable.keySet();
         ArrayList<LinkedHashMap<Long, Integer>> labelNodes;
         boolean retval = false;
@@ -183,18 +197,15 @@ public class InvertedIndexNeighborTables extends NeighborTables {
                
         Set<Long> labels = labelIndex.keySet();
         List<Map<Long, Integer>> nodeTable = new ArrayList<>(k); // [level]<label,count>
-
+        for(int i = 0; i<this.k; i++){
+            nodeTable.add(new HashMap<Long, Integer>());
+        }
         for (Long label : labels) {
             List<LinkedHashMap<Long, Integer>> labelNodes = labelIndex.get(label); //[level]<node,count>
 
-            for (int i = 0; i < labelNodes.size(); i++) {
-                Map<Long, Integer> labelCounts = nodeTable.get(i);
-                if (labelCounts == null) {
-                    labelCounts = new HashMap<>();
-                    nodeTable.set(i, labelCounts);
-                }
+            for (int i = 0; i < this.k; i++) {                
                 Integer ct = labelNodes.get(i).get(node);
-                labelCounts.put(label, ct == null ? 0 : ct);
+                nodeTable.get(i).put(label, ct == null ? 0 : ct);
             }
 
         }
@@ -279,8 +290,10 @@ public class InvertedIndexNeighborTables extends NeighborTables {
             levels = table.labelIndex.get(label);
             for (int i = 0; i < this.k; i++) {
                 for (Entry<Long, Integer> e : levels.get(i).entrySet()) {
-                    this.nodes.add(e.getKey());
-                    retval = retval || null != this.labelIndex.get(label).get(i).put(e.getKey(), e.getValue());
+                    if(e.getValue()>0){
+                        this.nodes.add(e.getKey());
+                        retval = retval || null != this.labelIndex.get(label).get(i).put(e.getKey(), e.getValue());
+                    }
                 }
             }
         }

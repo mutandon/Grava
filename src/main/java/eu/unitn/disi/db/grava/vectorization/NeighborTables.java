@@ -71,7 +71,7 @@ public abstract class NeighborTables extends LoggableObject{
     public boolean addNodeTable(List<Map<Long,Integer>> nodeTable, Long node) {
         boolean value = false;
         if(nodeTable.size() != this.k){
-            throw new IllegalStateException("Node table for"+ node +" has illegal length. Expected "+ this.k+" found "+ nodeTable.size());
+            throw new IllegalStateException("Node table for "+ node +" has illegal length. Expected "+ this.k+" found "+ nodeTable.size());
         }
 
         for (short i = 0; i < this.k; i++) {
