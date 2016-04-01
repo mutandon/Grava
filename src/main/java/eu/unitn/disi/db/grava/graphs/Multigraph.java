@@ -18,6 +18,7 @@
 package eu.unitn.disi.db.grava.graphs;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -128,6 +129,7 @@ public interface Multigraph extends Iterable<Long> {
      * @throws NullPointerException if the input vertex is null
      */
     public int inDegreeOf(Long vertex) throws NullPointerException;
+    
     /**
      * Returns a set of all edges incoming into the specified vertex.
      *
@@ -139,6 +141,18 @@ public interface Multigraph extends Iterable<Long> {
      */
     public Collection<Edge> incomingEdgesOf(Long vertex) throws NullPointerException;
 
+    /**
+     * Returns the iterator over all edges incoming into the specified vertex.
+     *
+     * @param vertex the vertex for which the list of incoming edges to be
+     * returned.
+     *
+     * @return an iterator of all edges incoming into the specified vertex.
+     * @throws NullPointerException if the input vertex is null
+     */
+    public Iterator<Edge> incomingEdgesIteratorOf(Long vertex) throws NullPointerException;
+    
+    
     /**
      * Returns the "out degree" of the specified vertex. An out degree of a
      * vertex in a directed graph is the number of outward directed edges from
@@ -162,6 +176,16 @@ public interface Multigraph extends Iterable<Long> {
      */
     public Collection<Edge> outgoingEdgesOf(Long vertex) throws NullPointerException;
 
+    /**
+     * Returns an iterator over all edges outgoing from the specified vertex.
+     *
+     * @param vertex the vertex for which the list of outgoing edges to be
+     * returned.
+     * @return a in iterator of all edges outgoing from the specified vertex.
+     * @throws NullPointerException if the input vertex is null
+     */
+    public Iterator<Edge> outgoingEdgesIteratorOf(Long vertex) throws NullPointerException;
+    
     /**
      * Merge this graph with the input graph. Parallelize the operations only if
      * needed otherwise go recursively

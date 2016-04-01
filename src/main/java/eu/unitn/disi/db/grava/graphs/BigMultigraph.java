@@ -60,22 +60,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
     //TODO: Use this
     //private int numEdges;
 
-    @Override
-    public Collection<Edge> getEdge(Long src, Long dest) throws NullPointerException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean containsEdge(Long sourceVertex, Long targetVertex) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Collection<Edge> edgesOf(Long id) throws NullPointerException {
-        Collection<Edge> totalEdges = incomingEdgesOf(id);
-        totalEdges.addAll(outgoingEdgesOf(id));
-        return totalEdges; 
-    }
+    
 
     public enum Separator {
         SPACE(' '),
@@ -388,6 +373,44 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         return edges;
     }
 
+    @Override
+    public Iterator<Edge> incomingEdgesIteratorOf(Long vertex) throws NullPointerException {
+        int[] bounds = new int[2];        
+        boundsOf(inEdges, bounds, vertex);
+        int length;
+        if (bounds == null || bounds[0] == -1) {
+           length = 0;
+        } else {
+           length = bounds[1]-bounds[0];
+        }
+        return new EdgeIterator(bounds[0] < 0 ? 0 : bounds[0], length > 0 ? length : 0, inEdges, true);
+        
+    }
+
+    @Override
+    public Iterator<Edge> outgoingEdgesIteratorOf(Long vertex) throws NullPointerException {
+        int[] bounds = new int[2];
+        boundsOf(outEdges, bounds, vertex);
+
+        int length;
+        if (bounds == null || bounds[0] == -1) {
+           length = 0;
+        } else {
+           length = bounds[1]-bounds[0];
+        }
+        return new EdgeIterator(bounds[0] < 0 ? 0 : bounds[0], length > 0 ? length : 0, outEdges,false);
+    }
+    
+
+    @Override
+    public Collection<Edge> edgesOf(Long id) throws NullPointerException {
+        Collection<Edge> totalEdges = incomingEdgesOf(id);
+        totalEdges.addAll(outgoingEdgesOf(id));
+        return totalEdges; 
+    }
+
+    
+    
     private synchronized static long[][] edgesOf(long[][] edges, int[] bounds, long vertex, long lastVertex) {
         if (vertex != lastVertex) {
             boundsOf(edges, bounds, vertex);
@@ -415,6 +438,14 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         return bounds[1] - bounds[0];
     }
 
+    /**
+     * bounds will contain first position and last position+1 for vertex 
+     * so edges[startingIndex][0] == vertex 
+     * but edges[endingIndex][0] != vertex
+     * @param edges
+     * @param bounds
+     * @param vertex 
+     */
     private synchronized static void boundsOf(long[][] edges, int[] bounds, long vertex) {
         int i;
         int startingIndex = CollectionUtilities.binaryTableSearch(edges, vertex);
@@ -445,6 +476,17 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         return CollectionUtilities.binaryTableSearch(inEdges, vertex) >= 0 || CollectionUtilities.binaryTableSearch(outEdges, vertex) >= 0;
     }
 
+    
+    @Override
+    public Collection<Edge> getEdge(Long src, Long dest) throws NullPointerException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean containsEdge(Long sourceVertex, Long targetVertex) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
     @Override
     public void removeVertex(Long id) throws NullPointerException {
         throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed.");
@@ -470,6 +512,41 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         return this.labelSet;
     }
 
+    private class EdgeIterator implements Iterator<Edge> {
+        private int current;
+        private final int end;
+        private final long[][] edges;
+
+        private final boolean incoming;
+        
+        public EdgeIterator(int st, int end, long[][] edges, boolean incoming) {
+            this.end = end;
+            this.current = st;
+            this.edges = edges;
+            this.incoming = incoming;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return this.current < this.end;
+        }
+
+        @Override
+        public Edge next() {                      
+           if(this.current >= this.end){
+               throw new NoSuchElementException("No more elements to explore");
+           }
+           long[] edge = this.edges[current];
+           this.current++;           
+           return new Edge(incoming ? edge[1] : edge[0], incoming? edge[0] : edge[1], edge[2]);
+        }
+        
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed");
+        }
+    }
+    
     private class NodeIterator implements Iterator<Long> {
 
         //Take into account the index in the inEdges and in the outEdges

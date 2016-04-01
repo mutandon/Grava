@@ -352,6 +352,16 @@ public class BaseMultigraph implements Multigraph {
         return labels;
     }
 
+    @Override
+    public Iterator<Edge> incomingEdgesIteratorOf(Long vertex) throws NullPointerException {
+        return incomingEdgesOf(vertex).iterator();
+    }
+
+    @Override
+    public Iterator<Edge> outgoingEdgesIteratorOf(Long vertex) throws NullPointerException {
+        return  outgoingEdgesOf(vertex).iterator();
+    }
+
 
     /*
      * Represents a container for the two set of edges (this prevents us to
