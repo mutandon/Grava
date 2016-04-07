@@ -318,20 +318,25 @@ public class BaseMultigraph implements Multigraph {
 
     @Override
     public Collection<Edge> getEdge(Long src, Long dest) throws NullPointerException {
-        Collection<Edge> outgoing = nodeEdges.get(src).getOutgoing(); 
+        EdgeContainer edgeContainer = nodeEdges.get(src);
         Collection<Edge> foundEdges = new ArrayList<>(); 
-        
-        for (Edge e : outgoing) {
-            if (Objects.equals(e.getDestination(), dest)) {
-                foundEdges.add(e);
+        if (edgeContainer != null) {
+            Collection<Edge> outgoing = edgeContainer.getOutgoing(); 
+
+            for (Edge e : outgoing) {
+                if (Objects.equals(e.getDestination(), dest)) {
+                    foundEdges.add(e);
+                }
             }
         }
         return foundEdges; 
     }
+        
 
     @Override
     public boolean containsEdge(Long sourceVertex, Long targetVertex) {
-        return !getEdge(sourceVertex, targetVertex).isEmpty();
+        Collection<Edge> candidateEdges = getEdge(sourceVertex, targetVertex);
+        return candidateEdges != null && !candidateEdges.isEmpty();
     }
 
     @Override
