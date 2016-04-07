@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Class that embeds the neighbor tables to be used in the neighborhood pruning
@@ -73,8 +74,6 @@ public class StoredInvertedIndexNeighborTables extends InvertedIndexNeighborTabl
         return tb.isStored();
     }
     
-
-    
     /**
      * load label table from file and overwrites to current index
      * @param label
@@ -111,8 +110,8 @@ public class StoredInvertedIndexNeighborTables extends InvertedIndexNeighborTabl
             lv = 0;
             for (LinkedHashMap<Long, Integer> table : levels) {
                 tb = new StorableTable(dirPath, e.getKey(), lv);
-                tb.putAll(table);
-                tb.save();                
+                tb.save();
+                lv++;                
             }            
         }               
     }

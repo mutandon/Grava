@@ -377,13 +377,16 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
     public Iterator<Edge> incomingEdgesIteratorOf(Long vertex) throws NullPointerException {
         int[] bounds = new int[2];        
         boundsOf(inEdges, bounds, vertex);
-        int length;
+        
+        int length, start;
         if (bounds == null || bounds[0] == -1) {
+           start = 0;
            length = 0;
         } else {
-           length = bounds[1]-bounds[0];
+            start = bounds[0];
+            length = bounds[1]-bounds[0];
         }
-        return new EdgeIterator(bounds[0] < 0 ? 0 : bounds[0], length > 0 ? length : 0, inEdges, true);
+        return new EdgeIterator(start, length, inEdges, true);
         
     }
 
@@ -392,13 +395,18 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         int[] bounds = new int[2];
         boundsOf(outEdges, bounds, vertex);
 
-        int length;
+        int length, start;
         if (bounds == null || bounds[0] == -1) {
+           start = 0;
            length = 0;
         } else {
-           length = bounds[1]-bounds[0];
+            start = bounds[0];
+            length = bounds[1]-bounds[0];
         }
-        return new EdgeIterator(bounds[0] < 0 ? 0 : bounds[0], length > 0 ? length : 0, outEdges,false);
+        
+       
+        
+        return new EdgeIterator(start, length, outEdges,false);
     }
     
 
@@ -520,7 +528,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         private final boolean incoming;
         
         public EdgeIterator(int st, int end, long[][] edges, boolean incoming) {
-            this.end = end;
+            this.end = st + end;
             this.current = st;
             this.edges = edges;
             this.incoming = incoming;

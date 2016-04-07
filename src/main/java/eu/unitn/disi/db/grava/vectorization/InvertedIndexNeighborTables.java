@@ -169,9 +169,18 @@ public class InvertedIndexNeighborTables extends NeighborTables {
             
         Set<Long> labels = levelNodeTable.keySet();
         ArrayList<LinkedHashMap<Long, Integer>> labelNodes;
-        boolean retval = false;
-        this.nodes.add(node);
-        for (Long label : labels) {
+        boolean retval = false;        
+        boolean added = false;
+        for (long label : labels) {
+            if(levelNodeTable.get(label)<1){
+                //debug("EMPTY NODE VALUE");
+                continue;
+            }
+            //Add the node only if NOT_EMPTY is found
+            if(!added){
+                this.nodes.add(node);
+                added=true;
+            }
             labelNodes = labelIndex.get(label);
 
             if (labelNodes == null) {
@@ -182,12 +191,39 @@ public class InvertedIndexNeighborTables extends NeighborTables {
                     labelNodes.add(new LinkedHashMap<Long, Integer>());
                 }
             }
-            this.nodes.add(node);
+            
             retval = retval || null != labelNodes.get(level).put(node, levelNodeTable.get(label)); //node[tab]count
+            //debug("Label %s level %s has %s nodes", label, level , labelNodes.get(level).size() );
             labelIndex.put(label, labelNodes);
         }
         return retval;
     }
+    
+    @Override
+    public boolean addNodeTable(List<Map<Long, Integer>> nodeTable, Long node) {
+ 
+        boolean value = false;
+        if(nodeTable.size() != this.k){
+            throw new IllegalStateException("Node table for "+ node +" has illegal length. Expected "+ this.k+" found "+ nodeTable.size());
+        }
+
+        for (short i = 0; i < this.k; i++) {
+            value = addNodeLevelTable(nodeTable.get(i), node, i) || value;
+        }
+        return value;
+        
+    }
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     @Override
     public List<Map<Long, Integer>> getNodeMap(long node) {
@@ -283,7 +319,9 @@ public class InvertedIndexNeighborTables extends NeighborTables {
         return bestNode;
     }
 
+    
     public boolean merge(InvertedIndexNeighborTables table) {
+        debug(" Inverted Merge");
         ArrayList<LinkedHashMap<Long, Integer>> levels;
         boolean retval = false;
         for (Long label : table.labelIndex.keySet()) {
@@ -304,8 +342,8 @@ public class InvertedIndexNeighborTables extends NeighborTables {
     public String toString() {
         throw new UnsupportedOperationException("Not implemented yet!");
     }
-    
-    
+
+        
 
     
 

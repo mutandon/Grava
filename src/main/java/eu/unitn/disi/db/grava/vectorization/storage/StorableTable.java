@@ -74,8 +74,8 @@ public class StorableTable extends LoggableObject implements Iterable<Pair<Long,
     public StorableTable(String dirPath, long label, int depth) throws IOException {
         this.label = label;
         this.depth = depth;
-        this.nodesPath = dirPath.concat(File.pathSeparator).concat(this.label + "-" + this.depth + "-nodes.tbl");
-        this.cadyPath = dirPath.concat(File.pathSeparator).concat(this.label + "-" + this.depth + "-cardinalities.tbl");
+        this.nodesPath = dirPath.concat(File.separator).concat(this.label + "-" + this.depth + "-nodes.tbl");
+        this.cadyPath = dirPath.concat(File.separator).concat(this.label + "-" + this.depth + "-cardinalities.tbl");
 
         File savingDir = new File(dirPath);
 
@@ -176,7 +176,7 @@ public class StorableTable extends LoggableObject implements Iterable<Pair<Long,
         } catch (IOException ex) {
             throw new IOException("Could Not Serialize Table Cardinalities File", ex);
         }
-        debug("Saved");
+        debug("Saved on %s", this.cadyPath);
     }
 
     /**
