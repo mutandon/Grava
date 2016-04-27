@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,17 +38,26 @@ import java.util.Set;
  */
 public class InvertedIndexNeighborTables extends NeighborTables {
 
+    public static final int DEFAULT_CAPACITY = 500_000;
+    
     /**
      * LabelID -> NodesList NodesList: [level]NodeID -> NumLabels
      */
-    protected Map<Long, ArrayList<LinkedHashMap<Long, Integer>>> labelIndex;
-    protected Set<Long> nodes = new HashSet<>();
-
-    public InvertedIndexNeighborTables(int k) {
-        labelIndex = new LinkedHashMap<>();
-        this.k = k;
+    protected Map<Long, ArrayList<Map<Long, Integer>>> labelIndex;
+    protected Set<Long> nodes;
+    protected int initialCapacity;
+    
+    public InvertedIndexNeighborTables(int k) {        
+        this(k, DEFAULT_CAPACITY);
     }
 
+    public InvertedIndexNeighborTables(int k, int capacity) {
+        this.initialCapacity = capacity;
+        labelIndex = new HashMap<>(this.initialCapacity );
+        nodes = new HashSet<>(this.initialCapacity, 0.95f);
+        this.k = k;        
+    }
+    
     @Override
     public Set<Long> getNodes() {
         return this.nodes;
@@ -114,13 +122,13 @@ public class InvertedIndexNeighborTables extends NeighborTables {
      * @param nodesMap
      * @return all the nodes that a specific label at some level
      */
-    public boolean addNodesForLabel(Long label, int level, LinkedHashMap<Long, Integer> nodesMap) {
+    public boolean addNodesForLabel(Long label, int level, Map<Long, Integer> nodesMap) {
         boolean retval = false;        
-        ArrayList<LinkedHashMap<Long, Integer>> labelNodes = labelIndex.get(label);
+        ArrayList<Map<Long, Integer>> labelNodes = labelIndex.get(label);
         if (labelNodes == null) {
             labelNodes = new ArrayList<>(k);
             for (int i = 0; i < k; i++) {
-                labelNodes.add(new LinkedHashMap<Long, Integer>());
+                labelNodes.add(new HashMap<Long, Integer>(initialCapacity));
             }
         }
         Map<Long, Integer> levelMap = labelNodes.get(level);
@@ -139,13 +147,13 @@ public class InvertedIndexNeighborTables extends NeighborTables {
      * @param nodesMap List  <Node,Count> map for each level
      * @return all the nodes that a specific label at some level
      */
-    public boolean addNodesForLabel(Long label, ArrayList<LinkedHashMap<Long, Integer>> nodesMap) {
+    public boolean addNodesForLabel(Long label, ArrayList<Map<Long, Integer>> nodesMap) {
         boolean retval = false;        
-        ArrayList<LinkedHashMap<Long, Integer>> labelNodes = labelIndex.get(label);
+        ArrayList<Map<Long, Integer>> labelNodes = labelIndex.get(label);
         if (labelNodes == null) {
             labelNodes = new ArrayList<>(k);
             for (int i = 0; i < k; i++) {
-                labelNodes.add(new LinkedHashMap<Long, Integer>());
+                labelNodes.add(new HashMap<Long, Integer>(initialCapacity));
             }
         }
         for (int i = 0; i < k; i++) {
@@ -161,6 +169,13 @@ public class InvertedIndexNeighborTables extends NeighborTables {
 
     }
     
+    public ArrayList<Map<Long, Integer>> addInvertedLevelTable(long label, ArrayList<Map<Long, Integer>> invertedLevelNodeTable){
+        if(invertedLevelNodeTable.size()!=this.k){
+            throw new IllegalStateException("Inverted Label Table table for "+ label +" has illegal length. Expected "+ this.k+" found "+ invertedLevelNodeTable.size());
+        }
+        return labelIndex.put(label, invertedLevelNodeTable);
+    }
+    
     @Override
     public boolean addNodeLevelTable(Map<Long, Integer> levelNodeTable, long node, short level) {
         if(levelNodeTable.size() <1) {
@@ -168,7 +183,7 @@ public class InvertedIndexNeighborTables extends NeighborTables {
         }
             
         Set<Long> labels = levelNodeTable.keySet();
-        ArrayList<LinkedHashMap<Long, Integer>> labelNodes;
+        ArrayList<Map<Long, Integer>> labelNodes;
         boolean retval = false;        
         boolean added = false;
         for (long label : labels) {
@@ -188,7 +203,7 @@ public class InvertedIndexNeighborTables extends NeighborTables {
             }
             if (labelNodes.isEmpty()) {
                 for (int i = 0; i < k; i++) {
-                    labelNodes.add(new LinkedHashMap<Long, Integer>());
+                    labelNodes.add(new HashMap<Long, Integer>(initialCapacity));
                 }
             }
             
@@ -217,13 +232,6 @@ public class InvertedIndexNeighborTables extends NeighborTables {
 
     
     
-    
-    
-    
-    
-    
-    
-    
 
     @Override
     public List<Map<Long, Integer>> getNodeMap(long node) {
@@ -231,17 +239,24 @@ public class InvertedIndexNeighborTables extends NeighborTables {
             return null;
         }
                
+        // Converts
+        // [level]<node,count>
+        // into
+        // [level]<label,count>
+        
         Set<Long> labels = labelIndex.keySet();
         List<Map<Long, Integer>> nodeTable = new ArrayList<>(k); // [level]<label,count>
         for(int i = 0; i<this.k; i++){
             nodeTable.add(new HashMap<Long, Integer>());
         }
         for (Long label : labels) {
-            List<LinkedHashMap<Long, Integer>> labelNodes = labelIndex.get(label); //[level]<node,count>
+            List<Map<Long, Integer>> labelNodes = labelIndex.get(label); //[level]<node,count>
 
             for (int i = 0; i < this.k; i++) {                
                 Integer ct = labelNodes.get(i).get(node);
-                nodeTable.get(i).put(label, ct == null ? 0 : ct);
+                if(ct!=null){
+                    nodeTable.get(i).put(label,  ct);
+                }
             }
 
         }
@@ -255,7 +270,7 @@ public class InvertedIndexNeighborTables extends NeighborTables {
      * @param label
      * @return  the list for very label of node-cardinality mappings
      */
-    public ArrayList<LinkedHashMap<Long, Integer>> getLabelCounts(long label){
+    public ArrayList<Map<Long, Integer>> getLabelCounts(long label){
         return this.labelIndex.get(label);
     }
     
@@ -284,8 +299,8 @@ public class InvertedIndexNeighborTables extends NeighborTables {
             return -1;
         }
         Long bestNode = getBestLabelCountNode(label, level, skipList == null ? new ArrayList<Long>(1) : skipList);
-        ArrayList<LinkedHashMap<Long, Integer>> al = labelIndex.get(label);
-        LinkedHashMap<Long, Integer> l = al.get(level);
+        ArrayList<Map<Long, Integer>> al = labelIndex.get(label);
+        Map<Long, Integer> l = al.get(level);
         Integer count = l.get(bestNode);
 
         //throw new NullPointerException("No number for the node "+ bestNode+ " with the best count for label "+label);
@@ -303,7 +318,7 @@ public class InvertedIndexNeighborTables extends NeighborTables {
         checkLevel(level);
         Long bestNode = null;
         int bestCount = -1;
-        HashMap<Long, Integer> levelMap = labelIndex.get(label).get(level);
+        Map<Long, Integer> levelMap = labelIndex.get(label).get(level);
         if (levelMap.isEmpty()) {
             debug("No node has %s at level %s", label, level);
             return null;
@@ -321,23 +336,50 @@ public class InvertedIndexNeighborTables extends NeighborTables {
 
     
     public boolean merge(InvertedIndexNeighborTables table) {
+        if(table.labelIndex.isEmpty()){
+            return false;
+        }
+                
         debug(" Inverted Merge");
-        ArrayList<LinkedHashMap<Long, Integer>> levels;
+        ArrayList<Map<Long, Integer>> levelsToAdd, targetLevels;
         boolean retval = false;
         for (Long label : table.labelIndex.keySet()) {
-            levels = table.labelIndex.get(label);
-            for (int i = 0; i < this.k; i++) {
-                for (Entry<Long, Integer> e : levels.get(i).entrySet()) {
-                    if(e.getValue()>0){
-                        this.nodes.add(e.getKey());
-                        retval = retval || null != this.labelIndex.get(label).get(i).put(e.getKey(), e.getValue());
+            levelsToAdd = table.labelIndex.get(label);
+            if(levelsToAdd.isEmpty()){
+                continue;
+            }
+            targetLevels = this.labelIndex.get(label);
+            
+            if(targetLevels == null){
+                targetLevels = new ArrayList<>(this.k);
+                for (int i = 0; i < k; i++) {
+                    targetLevels.add(levelsToAdd.get(i)); // RISKY BUSINESS
+                    // HOPE NOBODY CLEARS THE MAP YOU JUST ADDED
+                }
+                this.labelIndex.put(label, targetLevels);                
+                
+            } else {             
+            
+                for (int i = 0; i < this.k; i++) {
+                    for (Entry<Long, Integer> e : levelsToAdd.get(i).entrySet()) {
+                        if(e.getValue()>0){
+                            this.nodes.add(e.getKey());
+                            retval = retval || null != targetLevels.get(i).put(e.getKey(), e.getValue());
+                        }
                     }
                 }
             }
         }
+        
         return retval;
     }
 
+    
+    
+    public boolean isEmpty(){
+      return  this.labelIndex.isEmpty();
+    }
+    
     @Override
     public String toString() {
         throw new UnsupportedOperationException("Not implemented yet!");

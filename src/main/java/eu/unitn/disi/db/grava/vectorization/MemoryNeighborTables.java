@@ -17,6 +17,7 @@
  */
 package eu.unitn.disi.db.grava.vectorization;
 
+import eu.unitn.disi.db.grava.vectorization.NeighborTables;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,9 +49,13 @@ public class MemoryNeighborTables extends NeighborTables {
     @Override
     public boolean addNodeLevelTable(Map<Long, Integer> levelNodeTable, long node, short level) {
         List<Map<Long, Integer>> nodeTable = levelTables.get(node);
-        if (nodeTable == null) {
+        if (nodeTable == null ) {
             nodeTable = new ArrayList<>(k);
+            for (int i = 0; i < k; i++) {
+                nodeTable.add(null);
+            }
         }
+        assert level == 0 || nodeTable.get(level-1) != null;
         nodeTable.set(level, levelNodeTable);
         return levelTables.put(node, nodeTable) != null;
     }

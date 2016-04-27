@@ -27,7 +27,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -73,6 +72,9 @@ public final class PartitionedMultigraph extends BaseMultigraph {
      * @param nodeDegreeFile The file with the degrees for each node.
      * @param initialCapacity
      * @param nodePartitions
+     * @param edgePartitions
+     * @throws java.io.IOException
+     * @throws eu.unitn.disi.db.mutilities.exceptions.ParseException
      */
     public PartitionedMultigraph(String nodeDegreeFile, int initialCapacity, int nodePartitions, int edgePartitions) throws IOException, ParseException {
         this(initialCapacity, nodePartitions, edgePartitions);

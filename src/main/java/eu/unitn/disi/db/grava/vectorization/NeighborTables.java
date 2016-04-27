@@ -41,7 +41,7 @@ public abstract class NeighborTables extends LoggableObject{
     
     /**
      *
-     * @param levelNodeTable <label, count>
+     * @param levelNodeTable [ label, count ]
      * @param node
      * @param level
      * @return true if some table has been overwritten
@@ -50,9 +50,9 @@ public abstract class NeighborTables extends LoggableObject{
 
    
     /**
-     *
+     * 
      * @param node
-     * @return Map [level]<label, count>
+     * @return Map [level][ label, count ]
      */
     public abstract List<Map<Long, Integer>> getNodeMap(long node);
 
@@ -71,6 +71,15 @@ public abstract class NeighborTables extends LoggableObject{
     public abstract boolean addNodeTable(List<Map<Long,Integer>> nodeTable, Long node);
     
     
+    
+    /**
+     * 
+     * @return the Depth(k) at which the tables are computed
+     */
+    public int getMaxLevel(){
+        return this.k;
+    }
+    
     /**
      * Merge a table into this one
      * @param tables 
@@ -86,7 +95,10 @@ public abstract class NeighborTables extends LoggableObject{
     }
 
     
-    
+    /**
+     * Check that the selected level is compatible with the table;
+     * @param level 
+     */
     protected void checkLevel(int level){
         if(level < 0 || level > this.k){
             throw new IndexOutOfBoundsException("Maximum level is "+this.k+" requsted "+level );

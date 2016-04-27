@@ -61,6 +61,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
     //private int numEdges;
 
     
+    
 
     public enum Separator {
         SPACE(' '),
@@ -375,6 +376,9 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
 
     @Override
     public Iterator<Edge> incomingEdgesIteratorOf(Long vertex) throws NullPointerException {
+        if(vertex==null){
+            throw new NullPointerException("Vertex cannot be null");
+        }
         int[] bounds = new int[2];        
         boundsOf(inEdges, bounds, vertex);
         
@@ -392,6 +396,10 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
 
     @Override
     public Iterator<Edge> outgoingEdgesIteratorOf(Long vertex) throws NullPointerException {
+        if(vertex==null){
+            throw new NullPointerException("Vertex cannot be null");
+        }
+        
         int[] bounds = new int[2];
         boundsOf(outEdges, bounds, vertex);
 
@@ -409,6 +417,26 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         return new EdgeIterator(start, length, outEdges,false);
     }
     
+    
+    
+    @Override
+    public Iterator<Edge> labeledEdgesIteratorOf(Long label) throws NullPointerException {
+        if(label==null){
+            throw new NullPointerException("Label cannot be null");
+        }
+        return new LabeledEdgeIterator(new EdgeIterator(0, outEdges.length, outEdges,false), label);
+    }
+
+    @Override
+    public Iterator<Edge> labeledEdgesIteratorOf(Set<Long> labels) throws NullPointerException {
+        if(labels==null){
+            throw new NullPointerException("Label cannot be null");
+        }
+        return new LabeledEdgeIterator(new EdgeIterator(0, outEdges.length, outEdges,false), labels);
+    }
+    
+    
+    
 
     @Override
     public Collection<Edge> edgesOf(Long id) throws NullPointerException {
@@ -419,7 +447,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
 
     
     
-    private synchronized static long[][] edgesOf(long[][] edges, int[] bounds, long vertex, long lastVertex) {
+    private static long[][] edgesOf(long[][] edges, int[] bounds, long vertex, long lastVertex) {
         if (vertex != lastVertex) {
             boundsOf(edges, bounds, vertex);
         }
@@ -436,7 +464,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         return sublist;
     }
 
-    private synchronized static int degreeOf(long[][] edges, int[] bounds, long vertex, long lastVertex) {
+    private static int degreeOf(long[][] edges, int[] bounds, long vertex, long lastVertex) {
         if (vertex != lastVertex) {
             boundsOf(edges, bounds, vertex);
         }
@@ -454,7 +482,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
      * @param bounds
      * @param vertex 
      */
-    private synchronized static void boundsOf(long[][] edges, int[] bounds, long vertex) {
+    private static void boundsOf(long[][] edges, int[] bounds, long vertex) {
         int i;
         int startingIndex = CollectionUtilities.binaryTableSearch(edges, vertex);
         if (startingIndex >= 0) {
@@ -519,7 +547,9 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         }
         return this.labelSet;
     }
-
+               
+    
+    
     private class EdgeIterator implements Iterator<Edge> {
         private int current;
         private final int end;

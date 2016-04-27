@@ -19,25 +19,33 @@ package eu.unitn.disi.db.grava.graphs;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 /**
  * Represents a multigraph as a mean of standard operations
+ *
  * @author Davide Mottin <mottin@disi.unitn.eu>
  */
 public interface Multigraph extends Iterable<Long> {
+
     /**
      * Add a vertex in the graph. This must be called on source and destination
-     * node before the {@link #addEdge(java.lang.Long, java.lang.Long, java.lang.Long) }
+     * node before the {@link #addEdge(java.lang.Long, java.lang.Long, java.lang.Long)
+     * }
      * otherwise the latter will throw an exception
+     *
      * @param id The id of the node to be inserted
      * @throws NullPointerException if the input vertex is null
      */
     public void addVertex(Long id) throws NullPointerException;
+
     /**
-     * Add an edge to the graph, if both source and destination exists. To add a vertex,
-     * calls {@link #addVertex(java.lang.Long) } before.
-     * If both source and dest do not exist throws an {@link IllegalArgumentException}
+     * Add an edge to the graph, if both source and destination exists. To add a
+     * vertex, calls {@link #addVertex(java.lang.Long) } before. If both source
+     * and dest do not exist throws an {@link IllegalArgumentException}
+     *
      * @param src The source node in this directed multigraph
      * @param dest The dest node in this directed multigraph
      * @param label The label of the edge to be created
@@ -46,26 +54,32 @@ public interface Multigraph extends Iterable<Long> {
      * @throws NullPointerException if one of the input is null
      */
     public void addEdge(Long src, Long dest, Long label) throws IllegalArgumentException, NullPointerException;
+
     /**
-     * Add an edge to the graph, if both source and destination exists. To add a vertex,
-     * calls {@link #addVertex(java.lang.Long) } before.
-     * If both source and dest do not exist throws an {@link IllegalArgumentException}
+     * Add an edge to the graph, if both source and destination exists. To add a
+     * vertex, calls {@link #addVertex(java.lang.Long) } before. If both source
+     * and dest do not exist throws an {@link IllegalArgumentException}
+     *
      * @param edge The edge to be added into the graph
      * @throws IllegalArgumentException If src and edges are not present in the
      * vertex collection
      * @throws NullPointerException if the input edge is null
      */
     public void addEdge(Edge edge) throws IllegalArgumentException, NullPointerException;
+
     /**
      * Remove a vertex in the graph and its connected edges.
+     *
      * @param id The id of the node to be deleted
      * @throws NullPointerException if the input vertex is null
      */
     public void removeVertex(Long id) throws NullPointerException;
+
     /**
-     * Remove an edge from the graph.
-     * It does not remove dangling nodes; {@link #removeVertex(java.lang.Long)} on the endpoints must
-     * be called instead.
+     * Remove an edge from the graph. It does not remove dangling nodes;
+     * {@link #removeVertex(java.lang.Long)} on the endpoints must be called
+     * instead.
+     *
      * @param src The source node in this directed multigraph
      * @param dest The dest node in this directed multigraph
      * @param label The label of the edge to be created
@@ -74,53 +88,58 @@ public interface Multigraph extends Iterable<Long> {
      * @throws NullPointerException if one of the input is null
      */
     public void removeEdge(Long src, Long dest, Long label) throws IllegalArgumentException, NullPointerException;
+
     /**
-     * Remove an edge from the graph.
-     * It does not remove dangling nodes; {@link #removeVertex(java.lang.Long)} on the endpoints must
-     * be called instead.
+     * Remove an edge from the graph. It does not remove dangling nodes;
+     * {@link #removeVertex(java.lang.Long)} on the endpoints must be called
+     * instead.
+     *
      * @param edge The edge to be removed from the graph
      * @throws IllegalArgumentException If src and edges are not present in the
      * vertex collection
      * @throws NullPointerException if the input edge is null
      */
     public void removeEdge(Edge edge) throws IllegalArgumentException, NullPointerException;
+
     /**
      * Returns the set of vertices of the graph
+     *
      * @return The set of vertices
      */
     public Collection<Long> vertexSet();
 
     /**
      * Returns The number of vertices
+     *
      * @return The number of vertices
      */
     public int numberOfNodes();
 
-
     /**
      * Returns The number of edges
+     *
      * @return The number of edges
      */
     public int numberOfEdges();
 
-
     /**
      * Returns the set of edges of the graph
+     *
      * @return The set of edges
      */
     public Collection<Edge> edgeSet();
 
     /**
      * Returns the set of labels in the graph
+     *
      * @return The set of labels
      */
     public Collection<Long> labelSet();
 
-    
     /**
-     * Returns the "in degree" of the specified vertex. An in degree of a
-     * vertex in a directed graph is the number of incoming directed edges from
-     * that vertex. See <a href="http://mathworld.wolfram.com/Indegree.html">
+     * Returns the "in degree" of the specified vertex. An in degree of a vertex
+     * in a directed graph is the number of incoming directed edges from that
+     * vertex. See <a href="http://mathworld.wolfram.com/Indegree.html">
      * http://mathworld.wolfram.com/Indegree.html</a>.
      *
      * @param vertex vertex whose degree is to be calculated.
@@ -129,7 +148,7 @@ public interface Multigraph extends Iterable<Long> {
      * @throws NullPointerException if the input vertex is null
      */
     public int inDegreeOf(Long vertex) throws NullPointerException;
-    
+
     /**
      * Returns a set of all edges incoming into the specified vertex.
      *
@@ -151,8 +170,7 @@ public interface Multigraph extends Iterable<Long> {
      * @throws NullPointerException if the input vertex is null
      */
     public Iterator<Edge> incomingEdgesIteratorOf(Long vertex) throws NullPointerException;
-    
-    
+
     /**
      * Returns the "out degree" of the specified vertex. An out degree of a
      * vertex in a directed graph is the number of outward directed edges from
@@ -185,10 +203,34 @@ public interface Multigraph extends Iterable<Long> {
      * @throws NullPointerException if the input vertex is null
      */
     public Iterator<Edge> outgoingEdgesIteratorOf(Long vertex) throws NullPointerException;
+
+    /**
+     * Returns an iterator over all edges with a specific label.
+     *
+     * @param label the label of edges to be returned
+     * @return a in iterator of all edges with such label
+     * @throws NullPointerException if the input label is null
+     */
+    public Iterator<Edge> labeledEdgesIteratorOf(Long label) throws NullPointerException;
+
+    
+    /**
+     * Returns an iterator over all edges with a specific set of labels.
+     *
+     * @param labels the set of labels of edges to be returned
+     * @return a in iterator of all edges with one of such labels
+     * @throws NullPointerException if the input label set is null
+     */
+    public Iterator<Edge> labeledEdgesIteratorOf(Set<Long> labels) throws NullPointerException;
+    
+    
+    
+    
     
     /**
      * Merge this graph with the input graph. Parallelize the operations only if
      * needed otherwise go recursively
+     *
      * @param graph The input graph to be merged to this
      * @return this graph
      * @throws NullPointerException if the input graph is null
@@ -198,22 +240,23 @@ public interface Multigraph extends Iterable<Long> {
 
     /**
      * Check if the input vertex is contained in the Multigraph
+     *
      * @param vertex The input vertex to be checked
      * @return True if it contains the node, false otherwise
      * @throws NullPointerException If the vertex is null
      */
     public boolean containsVertex(Long vertex) throws NullPointerException;
-    
-    /** 
+
+    /**
      * Get the edges between source and destination
+     *
      * @param src The source node
      * @param dest The destination node
      * @return The edges between source and destination
      * @throws NullPointerException If either src or dest are null
      */
     public Collection<Edge> getEdge(Long src, Long dest) throws NullPointerException;
-    
-    
+
     /**
      * Returns <tt>true</tt> if and only if this graph contains an edge going
      * from the source vertex to the target vertex. In undirected graphs the
@@ -227,14 +270,65 @@ public interface Multigraph extends Iterable<Long> {
      * @return <tt>true</tt> if this graph contains the specified edge.
      */
     public boolean containsEdge(Long src, Long dest);
-    
-    
+
     /**
-     * Return the edges (incoming and outgoing) of a specific node. 
+     * Return the edges (incoming and outgoing) of a specific node.
+     *
      * @param id The id of the node
      * @return The set of edges associated with the input node
      * @throws NullPointerException If the id is null
      */
     public Collection<Edge> edgesOf(Long id) throws NullPointerException;
+    
+    public class LabeledEdgeIterator implements Iterator<Edge> {
+
+        private final Iterator<Edge> edges;
+        private final long label;
+        private final Set<Long> labels;
+        private final boolean useSet;
+        
+        private Edge next = null;
+        
+        protected LabeledEdgeIterator(Iterator<Edge> edges, Long label) {
+            this.edges = edges;
+            this.label = label;
+            this.labels = null;
+            this.useSet = false;
+        }
+        
+        protected LabeledEdgeIterator(Iterator<Edge> edges, Set<Long> labels) {
+            this.edges = edges;
+            this.label = 0l;
+            this.labels = labels;
+            this.useSet = true;
+        }
+        
+        @Override
+        public boolean hasNext() {
+            if (next != null) {
+                return true;
+            }
+            Edge tmp;
+            while (edges.hasNext() && next == null) {
+                tmp = edges.next();
+                if ((!useSet && tmp.getLabel().equals(this.label)) 
+                        || (useSet && this.labels.contains(tmp.getLabel()))) {
+                    next = tmp;
+                }
+            }
+            return next == null;
+        }
+        
+        @Override
+        public Edge next() {
+            if (next == null) {
+                throw new NoSuchElementException("No more elements to explore");
+            }
+            Edge tmp = next;
+            next = null;
+            return tmp;
+        }
+        
+    }
     
 }
