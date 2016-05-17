@@ -547,7 +547,24 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         }
         return this.labelSet;
     }
-               
+      
+    
+    @Override
+    public Collection<Long> neighborsOf(Long id) {
+        Set<Long> neighs = new HashSet<>((4/3)*(this.outDegreeOf(id)+ this.inDegreeOf(id)));
+        Edge e;
+        Iterator<Edge> eds;
+        for (int i = 0; i < 2; i++) {
+            eds = i==0 ? incomingEdgesIteratorOf(id) : outgoingEdgesIteratorOf(id);
+            while(eds.hasNext()){
+               e =  eds.next();
+               neighs.add( i==0 ? e.getSource(): e.getDestination());
+            }
+        }
+        return neighs;
+        
+    }
+
     
     
     private class EdgeIterator implements Iterator<Edge> {

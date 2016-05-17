@@ -442,6 +442,22 @@ public class BaseMultigraph implements Multigraph {
         return new LabeledEdgeIterator(this.edges.iterator(), labels);
     }
 
+    @Override
+    public Collection<Long> neighborsOf(Long id) {
+        Set<Long> neighs = new HashSet<>(this.edges.size()*2/this.nodeEdges.size());
+        Edge e;
+        Iterator<Edge> eds;
+        for (int i = 0; i < 2; i++) {
+            eds = i==0 ? incomingEdgesIteratorOf(id) : outgoingEdgesIteratorOf(id);
+            while(eds.hasNext()){
+               e =  eds.next();
+               neighs.add( i==0 ? e.getSource(): e.getDestination());
+            }
+        }
+        return neighs;
+        
+    }
+
     /*
      * Represents a container for the two set of edges (this prevents us to
      * use two different maps in the class)

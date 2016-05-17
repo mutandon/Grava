@@ -70,6 +70,14 @@ public abstract class NeighborTables extends LoggableObject{
      */
     public abstract boolean addNodeTable(List<Map<Long,Integer>> nodeTable, Long node);
     
+    /**
+     * 
+     * @param node
+     * @param label
+     * @param level
+     * @return the cardinality for the node label at specified level
+     */
+    public abstract int getCountForNodeLabel(long node, long label, int level);
     
     
     /**
@@ -94,6 +102,7 @@ public abstract class NeighborTables extends LoggableObject{
         return value;
     }
 
+    
     
     /**
      * Check that the selected level is compatible with the table;

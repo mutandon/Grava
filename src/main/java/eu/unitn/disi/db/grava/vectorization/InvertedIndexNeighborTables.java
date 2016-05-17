@@ -100,6 +100,12 @@ public class InvertedIndexNeighborTables extends NeighborTables {
         return labelNodes;
     }
 
+    @Override
+    public int getCountForNodeLabel(long node, long label, int level){
+        checkLevel(level);
+        return labelIndex.get(label).get(level).get(node);                
+    }
+    
     /**
      *
      * @param label
@@ -312,7 +318,7 @@ public class InvertedIndexNeighborTables extends NeighborTables {
      * @param label
      * @param level
      * @param skipList
-     * @return
+     * @return bestNode
      */
     public Long getBestLabelCountNode(Long label, int level, Collection<Long> skipList) {
         checkLevel(level);

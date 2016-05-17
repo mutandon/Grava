@@ -18,6 +18,7 @@
 package eu.unitn.disi.db.grava.graphs;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -280,27 +281,26 @@ public interface Multigraph extends Iterable<Long> {
      */
     public Collection<Edge> edgesOf(Long id) throws NullPointerException;
     
+    public Collection<Long> neighborsOf(Long id);
+    
+    
+    
     public class LabeledEdgeIterator implements Iterator<Edge> {
 
-        private final Iterator<Edge> edges;
-        private final long label;
-        private final Set<Long> labels;
-        private final boolean useSet;
-        
+        private final Iterator<Edge> edges;        
+        private final Set<Long> labels;        
         private Edge next = null;
         
         protected LabeledEdgeIterator(Iterator<Edge> edges, Long label) {
-            this.edges = edges;
-            this.label = label;
-            this.labels = null;
-            this.useSet = false;
+            this.edges = edges;            
+            this.labels = new HashSet<>();
+            this.labels.add(label);
         }
         
         protected LabeledEdgeIterator(Iterator<Edge> edges, Set<Long> labels) {
             this.edges = edges;
-            this.label = 0l;
             this.labels = labels;
-            this.useSet = true;
+
         }
         
         @Override
@@ -311,12 +311,11 @@ public interface Multigraph extends Iterable<Long> {
             Edge tmp;
             while (edges.hasNext() && next == null) {
                 tmp = edges.next();
-                if ((!useSet && tmp.getLabel().equals(this.label)) 
-                        || (useSet && this.labels.contains(tmp.getLabel()))) {
+                if (this.labels.contains(tmp.getLabel())) {
                     next = tmp;
                 }
             }
-            return next == null;
+            return next != null;
         }
         
         @Override
