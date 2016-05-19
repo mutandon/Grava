@@ -312,6 +312,16 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         return edgeSet;
     }
 
+    
+    @Override
+    public synchronized int degreeOf(Long vertex) throws NullPointerException {
+        int degree = degreeOf(inEdges, lastInBounds, vertex, lastInVertex);
+        degree += degreeOf(outEdges, lastOutBounds, vertex, lastOutVertex);
+        lastInVertex = vertex;
+        lastOutVertex = vertex;
+        return degree;
+    }
+    
     @Override
     public synchronized int inDegreeOf(Long vertex) throws NullPointerException {
         int degree = degreeOf(inEdges, lastInBounds, vertex, lastInVertex);

@@ -184,7 +184,7 @@ public class InvertedIndexNeighborTables extends NeighborTables {
     
     @Override
     public boolean addNodeLevelTable(Map<Long, Integer> levelNodeTable, long node, short level) {
-        if(levelNodeTable.size() <1) {
+        if(levelNodeTable == null || levelNodeTable.size() <1) {
             return false;
         }
             

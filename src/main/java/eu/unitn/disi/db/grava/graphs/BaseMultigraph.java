@@ -144,20 +144,24 @@ public class BaseMultigraph implements Multigraph {
      * @param label The label of the edge to be created
      */
     public void forceAddEdge(Long src, Long dest, Long label) throws NullPointerException {
+        Edge e = new Edge(src, dest, label);
+        if(edges.contains(e)){
+            return;
+        }
+                
         EdgeContainer srcC = nodeEdges.get(src);
         EdgeContainer dstC = nodeEdges.get(dest);
 
-        Edge e = new Edge(src, dest, label);
-
-        if (srcC == null) {
-            addVertex(src);
+        
+        if (srcC == null || dstC == null) {
+            this.addVertex(src);
+            this.addVertex(dest);
             srcC = nodeEdges.get(src);
-        }
-        if (dstC == null) {
-            addVertex(dest);
             dstC = nodeEdges.get(dest);
+        
         }
-
+        
+        
         if (srcC.addOutgoingEdge(e)) {
             edges.add(e);
             dstC.addIncomingEdge(e);
@@ -194,7 +198,21 @@ public class BaseMultigraph implements Multigraph {
      */
     @Override
     public Collection<Edge> edgeSet() {
-        return edges;
+        return new HashSet<>(edges);
+    }
+    
+    /**
+     * 
+     * @param vertex
+     * @return
+     * @throws NullPointerException 
+     */
+    @Override
+    public int degreeOf(Long vertex) throws NullPointerException {
+        if (!nodeEdges.containsKey(vertex)) {
+            throw new IllegalArgumentException("This graph does not contain node " + vertex);
+        }
+        return nodeEdges.containsKey(vertex) ? nodeEdges.get(vertex).getIncoming().size() + nodeEdges.get(vertex).getOutgoing().size() : 0;
     }
 
     /**
@@ -392,7 +410,7 @@ public class BaseMultigraph implements Multigraph {
 
     @Override
     public Collection<Edge> edgesOf(Long id) throws NullPointerException {
-        Collection<Edge> totalEdges = incomingEdgesOf(id);
+        Collection<Edge> totalEdges = new HashSet<>(incomingEdgesOf(id));
         totalEdges.addAll(outgoingEdgesOf(id));
         return totalEdges;
     }

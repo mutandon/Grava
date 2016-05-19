@@ -137,6 +137,15 @@ public interface Multigraph extends Iterable<Long> {
      */
     public Collection<Long> labelSet();
 
+    
+    /**
+     * 
+     * @param vertex
+     * @return the sum of InDegree and OutDegree
+     * @throws NullPointerException 
+     */
+    public abstract int degreeOf(Long vertex)  throws NullPointerException;
+    
     /**
      * Returns the "in degree" of the specified vertex. An in degree of a vertex
      * in a directed graph is the number of incoming directed edges from that
