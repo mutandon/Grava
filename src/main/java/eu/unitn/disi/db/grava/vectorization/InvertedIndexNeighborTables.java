@@ -63,6 +63,10 @@ public class InvertedIndexNeighborTables extends NeighborTables {
         return this.nodes;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public Set<Long> getLabels(){
         return labelIndex.keySet();
               
@@ -76,6 +80,11 @@ public class InvertedIndexNeighborTables extends NeighborTables {
         return this.labelIndex.size();
     }
     
+    /**
+     * 
+     * @param label
+     * @return 
+     */
     public boolean hasMapped(long label){
         return this.labelIndex.containsKey(label);
     }
@@ -340,7 +349,11 @@ public class InvertedIndexNeighborTables extends NeighborTables {
         return bestNode;
     }
 
-    
+    /**
+     * 
+     * @param table
+     * @return 
+     */
     public boolean merge(InvertedIndexNeighborTables table) {
         if(table.labelIndex.isEmpty()){
             return false;
@@ -381,7 +394,10 @@ public class InvertedIndexNeighborTables extends NeighborTables {
     }
 
     
-    
+    /**
+     * 
+     * @return 
+     */
     public boolean isEmpty(){
       return  this.labelIndex.isEmpty();
     }

@@ -41,7 +41,7 @@ import java.util.concurrent.Future;
 public class BaseMultigraph implements Multigraph {
 
     private static final int MIN_SIZE_PARALLELIZATION = 2000;
-
+    private static final float SET_SCALE_FACTOR = 1.4f;
     protected Map<Long, EdgeContainer> nodeEdges;
     protected Collection<Edge> edges;
 
@@ -71,8 +71,9 @@ public class BaseMultigraph implements Multigraph {
      */
     public BaseMultigraph(int initialCapacity, float avgDegree) {
         this.avgNodeDegree = (int) Math.ceil(avgDegree);
-        nodeEdges = new HashMap<>(initialCapacity);
-        edges = new HashSet<>((int) Math.ceil(initialCapacity * avgDegree));
+        int scaledCapacity = (int)(SET_SCALE_FACTOR*initialCapacity);
+        nodeEdges = new HashMap<>(scaledCapacity);
+        edges = new HashSet<>((int) Math.ceil(scaledCapacity * avgDegree));
     }
 
     /**
@@ -486,8 +487,8 @@ public class BaseMultigraph implements Multigraph {
         protected Collection<Edge> outgoing;
 
         public BaseEdgeContainer() {
-            incoming = new HashSet<>(avgNodeDegree);
-            outgoing = new HashSet<>(avgNodeDegree);
+            incoming = new HashSet<>((int)(SET_SCALE_FACTOR*avgNodeDegree));
+            outgoing = new HashSet<>((int)(SET_SCALE_FACTOR*avgNodeDegree));
         }
 
         @Override
