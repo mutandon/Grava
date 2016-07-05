@@ -18,7 +18,7 @@
 package eu.unitn.disi.db.grava.graphs;
 
 import eu.unitn.disi.db.mutilities.exceptions.ParseException;
-import eu.unitn.disi.db.mutilities.CollectionUtilities;
+import eu.unitn.disi.db.mutilities.data.CollectionUtilities;
 import eu.unitn.disi.db.mutilities.LoggableObject;
 import java.io.BufferedReader;
 import java.io.File;

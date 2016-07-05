@@ -71,7 +71,7 @@ public class BaseMultigraph implements Multigraph {
      */
     public BaseMultigraph(int initialCapacity, float avgDegree) {
         this.avgNodeDegree = (int) Math.ceil(avgDegree);
-        int scaledCapacity = (int)(SET_SCALE_FACTOR*initialCapacity);
+        int scaledCapacity = (int) (SET_SCALE_FACTOR * initialCapacity);
         nodeEdges = new HashMap<>(scaledCapacity);
         edges = new HashSet<>((int) Math.ceil(scaledCapacity * avgDegree));
     }
@@ -93,8 +93,8 @@ public class BaseMultigraph implements Multigraph {
 
     /**
      * Add an edge to the graph, if both source and destination exists. To add a
-     * vertex, calls {@link #addVertex(java.lang.Long) } before. If either source
-     * or dest do not exist throws an {@link IllegalArgumentException}
+     * vertex, calls {@link #addVertex(java.lang.Long) } before. If either
+     * source or dest do not exist throws an {@link IllegalArgumentException}
      *
      * @param src The source node in this directed multigraph
      * @param dest The dest node in this directed multigraph
@@ -124,8 +124,8 @@ public class BaseMultigraph implements Multigraph {
 
     /**
      * Add an edge to the graph, if both source and destination exists. To add a
-     * vertex, calls {@link #addVertex(java.lang.Long) } before. If either source
-     * or dest do not exist throws an {@link IllegalArgumentException}
+     * vertex, calls {@link #addVertex(java.lang.Long) } before. If either
+     * source or dest do not exist throws an {@link IllegalArgumentException}
      *
      * @param edge The edge to be added into the graph
      * @throws IllegalArgumentException If src and edges are not present in the
@@ -138,7 +138,7 @@ public class BaseMultigraph implements Multigraph {
 
     /**
      * Add an edge to the graph. If either source or destination nodes do not
-     * exist, it calls {@link #addVertex(java.lang.Long) }. 
+     * exist, it calls {@link #addVertex(java.lang.Long) }.
      *
      * @param src The source node in this directed multigraph
      * @param dest The dest node in this directed multigraph
@@ -146,23 +146,21 @@ public class BaseMultigraph implements Multigraph {
      */
     public void forceAddEdge(Long src, Long dest, Long label) throws NullPointerException {
         Edge e = new Edge(src, dest, label);
-        if(edges.contains(e)){
+        if (edges.contains(e)) {
             return;
         }
-                
+
         EdgeContainer srcC = nodeEdges.get(src);
         EdgeContainer dstC = nodeEdges.get(dest);
 
-        
         if (srcC == null || dstC == null) {
             this.addVertex(src);
             this.addVertex(dest);
             srcC = nodeEdges.get(src);
             dstC = nodeEdges.get(dest);
-        
+
         }
-        
-        
+
         if (srcC.addOutgoingEdge(e)) {
             edges.add(e);
             dstC.addIncomingEdge(e);
@@ -178,10 +176,7 @@ public class BaseMultigraph implements Multigraph {
     public void forceAddEdge(Edge edge) throws NullPointerException {
         forceAddEdge(edge.getSource(), edge.getDestination(), edge.getLabel());
     }
-    
-    
-    
-    
+
     /**
      * Returns the set of vertices of the graph
      *
@@ -201,12 +196,12 @@ public class BaseMultigraph implements Multigraph {
     public Collection<Edge> edgeSet() {
         return new HashSet<>(edges);
     }
-    
+
     /**
-     * 
+     *
      * @param vertex
      * @return
-     * @throws NullPointerException 
+     * @throws NullPointerException
      */
     @Override
     public int degreeOf(Long vertex) throws NullPointerException {
@@ -329,6 +324,20 @@ public class BaseMultigraph implements Multigraph {
             }
             //vertices.addAll(graph.vertices);
             edges.addAll(graph.edges);
+        }
+        return this;
+    }
+
+    /**
+     * Merge this graph with the input graph.
+     *
+     * @param graph The input graph to be merged to this
+     * @return this graph
+     * @throws NullPointerException if the input graph is null
+     */
+    public BaseMultigraph merge(Multigraph graph) {
+        for (Edge e : graph.edgeSet()) {
+            this.forceAddEdge(e);
         }
         return this;
     }
@@ -463,18 +472,18 @@ public class BaseMultigraph implements Multigraph {
 
     @Override
     public Collection<Long> neighborsOf(Long id) {
-        Set<Long> neighs = new HashSet<>(this.edges.size()*2/this.nodeEdges.size());
+        Set<Long> neighs = new HashSet<>(this.edges.size() * 2 / this.nodeEdges.size());
         Edge e;
         Iterator<Edge> eds;
         for (int i = 0; i < 2; i++) {
-            eds = i==0 ? incomingEdgesIteratorOf(id) : outgoingEdgesIteratorOf(id);
-            while(eds.hasNext()){
-               e =  eds.next();
-               neighs.add( i==0 ? e.getSource(): e.getDestination());
+            eds = i == 0 ? incomingEdgesIteratorOf(id) : outgoingEdgesIteratorOf(id);
+            while (eds.hasNext()) {
+                e = eds.next();
+                neighs.add(i == 0 ? e.getSource() : e.getDestination());
             }
         }
         return neighs;
-        
+
     }
 
     /*
@@ -487,8 +496,8 @@ public class BaseMultigraph implements Multigraph {
         protected Collection<Edge> outgoing;
 
         public BaseEdgeContainer() {
-            incoming = new HashSet<>((int)(SET_SCALE_FACTOR*avgNodeDegree));
-            outgoing = new HashSet<>((int)(SET_SCALE_FACTOR*avgNodeDegree));
+            incoming = new HashSet<>((int) (SET_SCALE_FACTOR * avgNodeDegree));
+            outgoing = new HashSet<>((int) (SET_SCALE_FACTOR * avgNodeDegree));
         }
 
         @Override

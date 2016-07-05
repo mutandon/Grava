@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 /**
  *
@@ -65,7 +64,7 @@ public class MemoryNeighborTables extends NeighborTables {
         if (nodeTable == null) {
             nodeTable = new ArrayList<>(k);
             for (int i = 0; i < k; i++) {
-                nodeTable.add(new HashMap<Long, Integer>(INITIAL_SIZE/10));
+                nodeTable.add(new HashMap<>(INITIAL_SIZE/10));
             }
         }
         assert level == 0 || nodeTable.get(level - 1) != null;

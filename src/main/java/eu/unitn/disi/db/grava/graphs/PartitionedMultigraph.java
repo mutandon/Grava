@@ -22,7 +22,7 @@ import eu.unitn.disi.db.grava.graphs.collections.PartitionableCollection;
 import eu.unitn.disi.db.grava.graphs.collections.PartitionableMap;
 import eu.unitn.disi.db.grava.graphs.collections.PartitionedList;
 import eu.unitn.disi.db.grava.graphs.collections.PartitionedMap;
-import eu.unitn.disi.db.mutilities.CollectionUtilities;
+import eu.unitn.disi.db.mutilities.data.CollectionUtilities;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;

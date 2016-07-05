@@ -20,6 +20,7 @@ package eu.unitn.disi.db.grava.vectorization;
 import eu.unitn.disi.db.mutilities.LoggableObject;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -30,12 +31,16 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -43,8 +48,9 @@ import java.util.Map;
  */
 public class TablesIndex extends LoggableObject {
 
-    private static final int DEFAULT_KEY_LENGTH = 8;
-    private static final int INITIAL_SIZE = 550;
+    private static final int DEFAULT_KEY_LENGTH = 3;
+    private static final int INITIAL_SIZE = 1000;
+    private static final int ALPHABET_SIZE = 25;
 
     private final String indexPath;
     private final boolean readOnly;
@@ -55,59 +61,71 @@ public class TablesIndex extends LoggableObject {
     private final MemoryNeighborTables cachedTables;
 
     /**
-     * Instantiate an index for MemoryNeighborTables
-     * that is read only and has caching disactivated
+     * Instantiate an index for MemoryNeighborTables that is read only and has
+     * caching disactivated
+     *
      * @param path
-     * @param k
-     * @throws IOException 
+     * @param k depth of the memory table
+     * @throws IOException
      */
     public TablesIndex(String path, int k) throws IOException {
         this(path, k, true, false, DEFAULT_KEY_LENGTH);
     }
 
-    
     /**
-     * Instantiate an index for MemoryNeighborTables
-     * that has caching disactivated
+     * Instantiate an index for MemoryNeighborTables that has caching
+     * disactivated
+     *
      * @param path
-     * @param k
+     * @param k depth of the memory table
      * @param readOnly
-     * @throws IOException 
+     * @throws IOException
      */
     public TablesIndex(String path, int k, boolean readOnly) throws IOException {
         this(path, k, readOnly, false, DEFAULT_KEY_LENGTH);
     }
-    
+
+    /**
+     *
+     * @param path
+     * @param k depth of the memory table
+     * @param readOnly
+     * @param caching
+     * @param keyFileSize number of characters in the file size name
+     * @throws IOException
+     */
     public TablesIndex(String path, int k, boolean readOnly, boolean caching, int keyFileSize) throws IOException {
         this.indexPath = path;
         this.k = k;
         this.readOnly = readOnly;
         this.caching = caching;
         this.cachedTables = new MemoryNeighborTables(k);
-        this.keyFileNameSize = keyFileSize;
+        this.keyFileNameSize = keyFileSize * 2;
         File savingDir = new File(path);
         // First, make sure the path exists
         // This will tell you if it is a directory
-        if (!savingDir.exists() && !readOnly){
-          if(!savingDir.mkdirs()){
-              throw new IOException("Could not instantiate index at directory path");
-          }
-        } else if(!savingDir.exists() || !savingDir.isDirectory() || !savingDir.canWrite()) {
+        if (!savingDir.exists() && !readOnly) {
+            if (!savingDir.mkdirs()) {
+                throw new IOException("Could not instantiate index at directory path");
+            }
+        } else if (!savingDir.exists() || !savingDir.isDirectory() || !savingDir.canWrite()) {
             throw new IOException("Illegal directory path");
         }
         //debug("Instantiated Table in %s with K:%s and KeyfileSize:%s", path, k, keyFileSize);
     }
 
     /**
-     * Computes the hashing value for the long node
-     * TODO: IMPROVE HASHING FUNCTION
+     * Computes the hashing value for the long node TODO: IMPROVE HASHING
+     * FUNCTION
+     *
      * @param decimal
      * @return
      * @throws NullPointerException
-     * @throws IndexOutOfBoundsException 
+     * @throws IndexOutOfBoundsException
      */
     private String generateFileName(long decimal) throws NullPointerException, IndexOutOfBoundsException {
-        String mid = "";
+        StringBuilder mid = new StringBuilder();
+
         //(decimal*5381)%(9973*9973) + "";
         String decimalString = (decimal) + "";
 
@@ -122,20 +140,20 @@ public class TablesIndex extends LoggableObject {
         }
 
         for (int i = 0; i < decimalString.length(); i += 2) {
-            mid = (char) (97 + (Integer.parseInt(decimalString.substring(i, i + 2))) % 25) + mid;
+            mid.append((char) (97 + (Integer.parseInt(decimalString.substring(i, i + 2))) % ALPHABET_SIZE));
         }
 
-        return "k_" + mid.toLowerCase() + ".idx";
+        return "k" + this.k + "_" + mid.toString().toLowerCase() + ".idx";
     }
 
     /**
      * Save this memory table on file, updating in case existing files
-     * 
+     *
      * IF CACHING IS ACTIVE THIS METHOD UPDATES THE CACHE AND RETURNS THE ENTIRE
-     * 
+     *
      * @param tb the table to store
-     * @return  true if new files were created
-     * @throws IOException 
+     * @return true if new files were created
+     * @throws IOException
      */
     public boolean storeTable(MemoryNeighborTables tb) throws IOException {
         if (readOnly) {
@@ -145,11 +163,8 @@ public class TablesIndex extends LoggableObject {
             throw new IllegalArgumentException("Could not save a table of size " + tb.getMaxLevel() + "  within a index of size " + this.k);
         }
 
-        
-
         return save(tb.getTables());
 
-        
     }
 
     /**
@@ -159,7 +174,7 @@ public class TablesIndex extends LoggableObject {
      * CACHE
      *
      * @param n the nodes for which loading the table
-     * @return  true if new files were created
+     * @return true if new files were created
      * @throws IOException
      */
     public MemoryNeighborTables loadTable(long n) throws IOException {
@@ -198,7 +213,9 @@ public class TablesIndex extends LoggableObject {
     /**
      * Save the Map Table minimizing the file writes
      *
-     * IF CACHING IS ACTIVE THIS METHOD UPDATES THE CACHE TODO: Parallelize
+     * IF CACHING IS ACTIVE THIS METHOD UPDATES THE CACHE
+     *
+     * TODO: Parallelize
      *
      * @param table
      * @return true if new files were created
@@ -214,7 +231,8 @@ public class TablesIndex extends LoggableObject {
         }
 
         //UPDATE FILES
-        HashMap<String, List<Long>> keys = new HashMap<>(table.size());
+        int initSize = (int) Math.ceil(Math.pow(ALPHABET_SIZE, this.keyFileNameSize) * 4 / 3);
+        HashMap<String, List<Long>> keys = new HashMap<>(initSize);
         Map<Long, List<Map<Long, Integer>>> loadedMap;
 
         //First compute minimum set of files
@@ -225,23 +243,22 @@ public class TablesIndex extends LoggableObject {
             key = generateFileName(n);
             tmpNodes = keys.get(key);
             if (tmpNodes == null) {
-                tmpNodes = new ArrayList<>(table.size());
+                tmpNodes = new ArrayList<>(table.size() / (ALPHABET_SIZE * this.keyFileNameSize));
                 keys.put(key, tmpNodes);
             }
             tmpNodes.add(n);
         }
 
         //debug("Will load %s files for %s nodes", keys.size(), table.size());
-
         //Then update file after file
         for (Map.Entry<String, List<Long>> entry : keys.entrySet()) {
             key = entry.getKey();
             List<Long> nodes = entry.getValue();
             try {
-                loadedMap = load(key);
+                loadedMap = load(key, this.indexPath);
                 if (loadedMap == null) {
                     ret = true; // New file will be generated
-                    loadedMap = new HashMap<>(INITIAL_SIZE);
+                    loadedMap = new HashMap<>(Math.max(nodes.size() * 4 / 3, INITIAL_SIZE));
                 }
                 for (long n : nodes) {
                     MemoryNeighborTables.put(n, table.get(n), loadedMap);
@@ -301,26 +318,33 @@ public class TablesIndex extends LoggableObject {
      * @throws ClassNotFoundException
      */
     private MemoryNeighborTables load(Collection<Long> nodes) throws IOException {
-        HashSet<String> keys = new HashSet<>(nodes.size());
-        Map<Long, List<Map<Long, Integer>>> loaded;
+        Set<String> keys = new HashSet<>(nodes.size());
 
         MemoryNeighborTables tables = this.caching ? this.cachedTables : new MemoryNeighborTables(k);
 
         //First compute minimum set of files
-        for (Long n : nodes) {
-            keys.add(generateFileName(n));
-        }
-        //debug("Will load %s files for %s nodes", keys.size(), nodes.size());
-        for (String key : keys) {
+        nodes.parallelStream().map(n -> {
+            return generateFileName(n);
+        }).sequential().forEach(s -> {
+            keys.add(s);
+        });
+        
+
+        debug("Will load %s files for %s nodes", keys.size(), nodes.size());
+        keys.parallelStream().map(key -> {
             try {
-                loaded = load(key);
-                if (loaded != null) {
-                    tables.putAll(loaded);
-                }
-            } catch (ClassNotFoundException ex) {
+                return TablesIndex.load(key, this.indexPath);
+            } catch (ClassNotFoundException | IOException ex) {
                 fatal("Could not load index file for %s - Corrupted Index", ex, key);
             }
-        }
+            return null;
+
+        }).sequential().forEach(loaded -> {
+            //Map<Long, List<Map<Long, Integer>>> loaded
+            if (loaded != null) {
+                tables.putAll(loaded);
+            }
+        });
 
         return tables;
 
@@ -339,7 +363,7 @@ public class TablesIndex extends LoggableObject {
      * @throws ClassNotFoundException
      */
     private Map<Long, List<Map<Long, Integer>>> load(long node) throws IOException, ClassNotFoundException {
-        return load(generateFileName(node));
+        return load(generateFileName(node), this.indexPath);
     }
 
     /**
@@ -352,16 +376,14 @@ public class TablesIndex extends LoggableObject {
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    private Map<Long, List<Map<Long, Integer>>> load(String key) throws IOException, ClassNotFoundException {
+    private static Map<Long, List<Map<Long, Integer>>> load(String key, String indexPath) throws IOException, ClassNotFoundException {
         File fileName = new File(indexPath + File.separator + key);
         if (!fileName.exists()) {
             return null;
         }
 
-        try (
-                InputStream file = new FileInputStream(fileName);
-                InputStream buffer = new BufferedInputStream(file);
-                ObjectInput input = new ObjectInputStream(buffer);) {
+        byte[] data = Files.readAllBytes(fileName.toPath());
+        try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(data))) {
 
             @SuppressWarnings("unchecked")
             Map<Long, List<Map<Long, Integer>>> loadedLevelTables = (Map<Long, List<Map<Long, Integer>>>) input.readObject();
@@ -371,7 +393,7 @@ public class TablesIndex extends LoggableObject {
             return loadedLevelTables;
 
         } catch (ClassNotFoundException ex) {
-            fatal("Could not load index file for %s - Corrupted Index", ex, key);
+            //fatal("Could not load index file for %s - Corrupted Index", ex, key);
             throw ex;
         }
 
