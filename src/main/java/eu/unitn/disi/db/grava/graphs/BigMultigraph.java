@@ -275,7 +275,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
 
     @Override
     public Collection<Long> vertexSet() {
-        Set<Long> verteces = new HashSet<>();
+        Set<Long> verteces = new HashSet<>(inEdges.length/2);
         for (int i = 0; i < inEdges.length; i++) {
             verteces.add(inEdges[i][0]);
             verteces.add(outEdges[i][0]);
