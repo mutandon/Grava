@@ -18,15 +18,11 @@
 package eu.unitn.disi.db.grava.vectorization;
 
 import eu.unitn.disi.db.mutilities.LoggableObject;
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
@@ -39,8 +35,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -48,16 +42,18 @@ import java.util.logging.Logger;
  */
 public class TablesIndex extends LoggableObject {
 
-    private static final int DEFAULT_KEY_LENGTH = 3;
-    private static final int INITIAL_SIZE = 1000;
-    private static final int ALPHABET_SIZE = 25;
+    protected static final int DEFAULT_KEY_LENGTH = 3;
+    protected static final int INITIAL_SIZE = 1000;
+    
 
+    protected final int k;
+    
     private final String indexPath;
     private final boolean readOnly;
-    private final boolean caching;
-    private final int k;
+    private final boolean caching;    
     private final int keyFileNameSize;
 
+    private static final int ALPHABET_SIZE = 25;
     private final MemoryNeighborTables cachedTables;
 
     /**
@@ -123,7 +119,7 @@ public class TablesIndex extends LoggableObject {
      * @throws NullPointerException
      * @throws IndexOutOfBoundsException
      */
-    private String generateFileName(long decimal) throws NullPointerException, IndexOutOfBoundsException {
+    public String generateFileName(long decimal) throws NullPointerException, IndexOutOfBoundsException {
         StringBuilder mid = new StringBuilder();
 
         //(decimal*5381)%(9973*9973) + "";
@@ -146,6 +142,10 @@ public class TablesIndex extends LoggableObject {
         return "k" + this.k + "_" + mid.toString().toLowerCase() + ".idx";
     }
 
+    
+    
+    
+    
     /**
      * Save this memory table on file, updating in case existing files
      *
@@ -290,6 +290,7 @@ public class TablesIndex extends LoggableObject {
         }
 
         File toFile = new File(indexPath + File.separator + key);
+        toFile.getParentFile().mkdirs();
         boolean isUpdate = toFile.exists();
 
         try (
@@ -333,12 +334,19 @@ public class TablesIndex extends LoggableObject {
         debug("Will load %s files for %s nodes", keys.size(), nodes.size());
         keys.parallelStream().map(key -> {
             try {
-                return TablesIndex.load(key, this.indexPath);
-            } catch (ClassNotFoundException | IOException ex) {
+                return TablesIndex.loadMapData(key, this.indexPath);
+            } catch (IOException ex) {
                 fatal("Could not load index file for %s - Corrupted Index", ex, key);
             }
             return null;
 
+        }).map( data -> {
+            try {
+                return TablesIndex.parseMap(data);
+            } catch (ClassNotFoundException | IOException ex) {
+                fatal("Could not parse index file- Corrupted Index", ex);
+            }   
+            return null;
         }).sequential().forEach(loaded -> {
             //Map<Long, List<Map<Long, Integer>>> loaded
             if (loaded != null) {
@@ -398,5 +406,37 @@ public class TablesIndex extends LoggableObject {
         }
 
     }
+    
+    private static byte[] loadMapData(String key, String indexPath) throws IOException{
+        File fileName = new File(indexPath + File.separator + key);
+        if (!fileName.exists()) {
+            return null;
+        }
+
+        return Files.readAllBytes(fileName.toPath());
+    }
+    
+    
+    private static Map<Long, List<Map<Long, Integer>>> parseMap(byte[] data) throws IOException, ClassNotFoundException{
+        if(data == null){
+            return null;
+        }
+        try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(data))) {
+
+            @SuppressWarnings("unchecked")
+            Map<Long, List<Map<Long, Integer>>> loadedLevelTables = (Map<Long, List<Map<Long, Integer>>>) input.readObject();
+            //if (loadedLevelTables.gesize() != this.k) {
+            //    throw new IllegalStateException("Could not save a table of size " + loadedLevelTables.size() + "  with tables of size " + this.k);
+            //}
+            return loadedLevelTables;
+
+        } catch (ClassNotFoundException ex) {
+            //fatal("Could not load index file for %s - Corrupted Index", ex, key);
+            throw ex;
+        }
+        
+    }
+    
+    
 
 }
