@@ -20,6 +20,7 @@ package eu.unitn.disi.db.grava.graphs;
 import eu.unitn.disi.db.mutilities.exceptions.ParseException;
 import eu.unitn.disi.db.mutilities.data.CollectionUtilities;
 import eu.unitn.disi.db.mutilities.LoggableObject;
+import eu.unitn.disi.db.mutilities.Pair;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -142,8 +144,24 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
                 outEdges[i] = new long[]{edge[1], edge[0], edge[2]};
             }
         } else {
-            loadEdges(inFile, true);
-            loadEdges(outFile, false);
+            Pair<String, Boolean> in = new Pair<>(inFile, true);
+            Pair<String, Boolean> out = new Pair<>(outFile, false);
+            
+            
+            List<Pair<String, Boolean>> toLoad = new ArrayList<>(2);
+            toLoad.add(in);
+            toLoad.add(out);
+            debug("Starting parallel Load");
+            toLoad.parallelStream().forEach( what ->{
+                try{
+                    loadEdges(what.getFirst(), what.getSecond());
+                } catch (IOException |  ParseException pe){
+                    fatal("Failed to Parse %s edges from %s ", pe, what.getSecond() ? "incoming" : " outgoing", what.getFirst());                    
+                }
+            });
+            
+            //loadEdges(inFile, true);
+            //loadEdges(outFile, false);
         }
         try {
             checkSort(inEdges, true, numThreads);
@@ -208,7 +226,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
                             }
                             delimiter = '\t';
                         }
-                        info("Recognized separator token '%c'\n", delimiter);
+                        info("\nRecognized separator token '%c'\n", delimiter);
                         break;
                     }
                 }
@@ -237,7 +255,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
                 }
                 count++;
                 if (count % LOG_MARK == 0) {
-                    info("Processed %d lines of %s\n", count, edgeFile);
+                    info("Processed %d lines of %s for %s Edges", count, edgeFile, incoming ? "_incoming_" : "_outgoing_");
                 }
             }
         } catch (IOException ex) {
@@ -312,6 +330,13 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         return edgeSet;
     }
 
+    
+    public int degreeOfNoCache(Long vertex) throws NullPointerException {
+        int[] bounds = new int[2];
+        int degree = degreeOf(inEdges, bounds, vertex, -1);
+        degree += degreeOf(outEdges, bounds, vertex, -1);
+        return degree;
+    }
     
     @Override
     public synchronized int degreeOf(Long vertex) throws NullPointerException {

@@ -35,6 +35,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -44,13 +51,12 @@ public class TablesIndex extends LoggableObject {
 
     protected static final int DEFAULT_KEY_LENGTH = 3;
     protected static final int INITIAL_SIZE = 1000;
-    
 
     protected final int k;
-    
+
     private final String indexPath;
     private final boolean readOnly;
-    private final boolean caching;    
+    private final boolean caching;
     private final int keyFileNameSize;
 
     private static final int ALPHABET_SIZE = 25;
@@ -142,10 +148,6 @@ public class TablesIndex extends LoggableObject {
         return "k" + this.k + "_" + mid.toString().toLowerCase() + ".idx";
     }
 
-    
-    
-    
-    
     /**
      * Save this memory table on file, updating in case existing files
      *
@@ -318,7 +320,7 @@ public class TablesIndex extends LoggableObject {
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    private MemoryNeighborTables load(Collection<Long> nodes) throws IOException {
+    private MemoryNeighborTables load2(Collection<Long> nodes) throws IOException {
         Set<String> keys = new HashSet<>(nodes.size());
 
         MemoryNeighborTables tables = this.caching ? this.cachedTables : new MemoryNeighborTables(k);
@@ -329,9 +331,8 @@ public class TablesIndex extends LoggableObject {
         }).sequential().forEach(s -> {
             keys.add(s);
         });
-        
 
-        debug("Will load %s files for %s nodes", keys.size(), nodes.size());
+        //debug("Will load %s files for %s nodes", keys.size(), nodes.size());
         keys.parallelStream().map(key -> {
             try {
                 return TablesIndex.loadMapData(key, this.indexPath);
@@ -340,12 +341,12 @@ public class TablesIndex extends LoggableObject {
             }
             return null;
 
-        }).map( data -> {
+        }).map(data -> {
             try {
                 return TablesIndex.parseMap(data);
             } catch (ClassNotFoundException | IOException ex) {
                 fatal("Could not parse index file- Corrupted Index", ex);
-            }   
+            }
             return null;
         }).sequential().forEach(loaded -> {
             //Map<Long, List<Map<Long, Integer>>> loaded
@@ -406,8 +407,8 @@ public class TablesIndex extends LoggableObject {
         }
 
     }
-    
-    private static byte[] loadMapData(String key, String indexPath) throws IOException{
+
+    private static byte[] loadMapData(String key, String indexPath) throws IOException {
         File fileName = new File(indexPath + File.separator + key);
         if (!fileName.exists()) {
             return null;
@@ -415,10 +416,9 @@ public class TablesIndex extends LoggableObject {
 
         return Files.readAllBytes(fileName.toPath());
     }
-    
-    
-    private static Map<Long, List<Map<Long, Integer>>> parseMap(byte[] data) throws IOException, ClassNotFoundException{
-        if(data == null){
+
+    private static Map<Long, List<Map<Long, Integer>>> parseMap(byte[] data) throws IOException, ClassNotFoundException {
+        if (data == null) {
             return null;
         }
         try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(data))) {
@@ -434,9 +434,94 @@ public class TablesIndex extends LoggableObject {
             //fatal("Could not load index file for %s - Corrupted Index", ex, key);
             throw ex;
         }
-        
+
     }
-    
-    
+
+    /**
+     * Load the memory tables for all the nodes in the collection
+     *
+     * IF CACHING IS ACTIVE THIS METHOD UPDATES THE CACHE TODO: Parallelize
+     *
+     * @param nodes
+     * @return the MemoryNeighborTables for th
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    private MemoryNeighborTables load(Collection<Long> nodes) throws IOException {
+        Set<String> keys = new HashSet<>(nodes.size());
+
+        MemoryNeighborTables tables = this.caching ? this.cachedTables : new MemoryNeighborTables(k);
+
+        //First compute minimum set of files
+        nodes.parallelStream().map(n -> {
+            return generateFileName(n);
+        }).sequential().forEach(s -> {
+            keys.add(s);
+        });
+
+        ExecutorService loaderPool = Executors.newFixedThreadPool(30);
+        List<Future<Map<Long, List<Map<Long, Integer>>>>> tableNodeFuture = new ArrayList<>();
+        debug("Will load %s files for %s nodes", keys.size(), nodes.size());
+
+        for (String key : keys) {
+            tableNodeFuture.add(loaderPool.submit(new LoadMapFile(key, this.indexPath)));
+        }
+
+        try {
+            for (Future<Map<Long, List<Map<Long, Integer>>>> future : tableNodeFuture) {
+
+                Map<Long, List<Map<Long, Integer>>> loaded =  future.get();
+                if(loaded != null){
+                    tables.putAll(loaded);
+                }
+
+            }
+        } catch (ExecutionException | InterruptedException ex) {
+            fatal("Could not load index file - Corrupted Index", ex);
+        }
+        loaderPool.shutdownNow();
+        loaderPool = null;
+        return tables;
+
+    }
+
+    private class LoadMapFile implements Callable<Map<Long, List<Map<Long, Integer>>>> {
+
+        private final String key;
+        private final String indexPath;
+
+        public LoadMapFile(String key, String indexPath) {
+            this.key = key;
+            this.indexPath = indexPath;
+
+        }
+
+        @Override
+        public Map<Long, List<Map<Long, Integer>>> call() throws Exception {
+            File fileName = new File(indexPath + File.separator + key);
+            if (!fileName.exists()) {
+                fatal("File index for %s %s does not exists!! ", indexPath, key);
+                return null;
+            }
+
+            byte[] data = Files.readAllBytes(fileName.toPath());
+
+            try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(data))) {
+
+                @SuppressWarnings("unchecked")
+                Map<Long, List<Map<Long, Integer>>> loadedLevelTables = (Map<Long, List<Map<Long, Integer>>>) input.readObject();
+                //if (loadedLevelTables.gesize() != this.k) {
+                //    throw new IllegalStateException("Could not save a table of size " + loadedLevelTables.size() + "  with tables of size " + this.k);
+                //}
+                return loadedLevelTables;
+
+            } catch (ClassNotFoundException ex) {
+                //fatal("Could not load index file for %s - Corrupted Index", ex, key);
+                throw ex;
+            }
+
+        }
+
+    }
 
 }
