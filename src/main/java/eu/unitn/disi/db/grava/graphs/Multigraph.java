@@ -290,7 +290,18 @@ public interface Multigraph extends Iterable<Long> {
      */
     public Collection<Edge> edgesOf(Long id) throws NullPointerException;
     
-    public Collection<Long> neighborsOf(Long id);
+    /**
+     * 
+     * @param id
+     * @return All the nodes around the given source
+     * @throws NullPointerException If the id is null
+     */
+    public Collection<Long> neighborsOf(Long id) throws NullPointerException;
+    
+   
+    
+    
+    
     
     
     

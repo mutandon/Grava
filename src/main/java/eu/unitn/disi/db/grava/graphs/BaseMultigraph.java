@@ -73,7 +73,7 @@ public class BaseMultigraph implements Multigraph {
         this.avgNodeDegree = (int) Math.ceil(avgDegree);
         int scaledCapacity = (int) (SET_SCALE_FACTOR * initialCapacity);
         nodeEdges = new HashMap<>(scaledCapacity);
-        edges = new HashSet<>((int) Math.ceil(scaledCapacity * avgDegree));
+        edges = new HashSet<>((int) Math.ceil(scaledCapacity * avgDegree));        
     }
 
     /**
@@ -486,6 +486,38 @@ public class BaseMultigraph implements Multigraph {
 
     }
 
+    @Override
+    public String toString() {
+        return "BaseMultigraph{" + "edges=" + edges + '}';
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 73 * hash + Objects.hashCode(this.edges);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final BaseMultigraph other = (BaseMultigraph) obj;
+        return this.edges.equals(other.edges);
+    }
+
+    
+
+    
+    
+    
     /*
      * Represents a container for the two set of edges (this prevents us to
      * use two different maps in the class)
@@ -567,4 +599,19 @@ public class BaseMultigraph implements Multigraph {
             }
         }
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 }

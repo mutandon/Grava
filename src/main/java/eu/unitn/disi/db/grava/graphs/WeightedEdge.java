@@ -21,7 +21,7 @@ package eu.unitn.disi.db.grava.graphs;
  *
  * @author Matteo Lissandrini
  */
-public class WeightedEdge extends Edge {
+public class WeightedEdge extends Edge{
     
     private double weight = 0.0;
     
@@ -64,6 +64,7 @@ public class WeightedEdge extends Edge {
     public WeightedEdge reversedEdge() {
         return new WeightedEdge(this.getDestination(), this.getSource(), this.getLabel(), weight);
     }
+
 }
     
 

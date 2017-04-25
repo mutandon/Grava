@@ -21,6 +21,7 @@ import eu.unitn.disi.db.mutilities.exceptions.ParseException;
 import eu.unitn.disi.db.mutilities.data.CollectionUtilities;
 import eu.unitn.disi.db.mutilities.LoggableObject;
 import eu.unitn.disi.db.mutilities.Pair;
+import eu.unitn.disi.db.mutilities.StringUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -129,7 +130,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         this.labelSet = new HashSet<>(LABELS);
         this.separator = separator;
 
-        int numEdges = nEdges > 0 ? nEdges : CollectionUtilities.countLines(inFile);
+        int numEdges = nEdges > 0 ? nEdges : StringUtils.countLines(inFile);
 
         //TODO: Add a check on different sizes.
         inEdges = new long[numEdges][];
@@ -217,10 +218,10 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
                 in.mark(2056);
                 while ((line = in.readLine()) != null) {
                     if (!"".equals(line) && !line.startsWith("#")) { //Comment
-                        tokens = CollectionUtilities.fastSplit(line, ' ', 3); // try to split on whitespace
+                        tokens = StringUtils.fastSplit(line, ' ', 3); // try to split on whitespace
                         delimiter = ' ';
                         if (tokens.length != 3) { // line too short or too long
-                            tokens = CollectionUtilities.fastSplit(line, '\t', 3); //try to split on tab
+                            tokens = StringUtils.fastSplit(line, '\t', 3); //try to split on tab
                             if (tokens.length != 3) {
                                 throw new ParseException("Token separator not recognized");
                             }
@@ -238,7 +239,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
             while ((line = in.readLine()) != null) {
                 line = line.trim();
                 if (!"".equals(line) && !line.startsWith("#")) { //Comment
-                    tokens = CollectionUtilities.fastSplit(line, delimiter, 3);
+                    tokens = StringUtils.fastSplit(line, delimiter, 3);
 
                     if (tokens.length != 3) {
                         throw new ParseException("Line[%d]: %s is malformed, num tokens %d", (count + 1), line, tokens.length);
