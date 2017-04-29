@@ -111,7 +111,7 @@ public class TablesIndex extends LoggableObject {
                 throw new IOException("Could not instantiate index at directory path");
             }
         } else if (!savingDir.exists() || !savingDir.isDirectory() || !savingDir.canWrite()) {
-            throw new IOException("Illegal directory path");
+            throw new IOException("Illegal directory path " + path);
         }
         //debug("Instantiated Table in %s with K:%s and KeyfileSize:%s", path, k, keyFileSize);
     }
