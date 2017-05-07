@@ -28,6 +28,7 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -291,7 +292,7 @@ public class TablesIndex extends LoggableObject {
             throw new IllegalStateException("This index is in Read Only MODE");
         }
 
-        File toFile = new File(indexPath + File.separator + key);
+        File toFile = Paths.get(indexPath, key).toFile();
         toFile.getParentFile().mkdirs();
         boolean isUpdate = toFile.exists();
 
@@ -386,7 +387,7 @@ public class TablesIndex extends LoggableObject {
      * @throws ClassNotFoundException
      */
     private static Map<Long, List<Map<Long, Integer>>> load(String key, String indexPath) throws IOException, ClassNotFoundException {
-        File fileName = new File(indexPath + File.separator + key);
+        File fileName = Paths.get(indexPath, key).toFile();
         if (!fileName.exists()) {
             return null;
         }
@@ -409,7 +410,7 @@ public class TablesIndex extends LoggableObject {
     }
 
     private static byte[] loadMapData(String key, String indexPath) throws IOException {
-        File fileName = new File(indexPath + File.separator + key);
+        File fileName = Paths.get(indexPath, key).toFile();
         if (!fileName.exists()) {
             return null;
         }
@@ -498,7 +499,7 @@ public class TablesIndex extends LoggableObject {
 
         @Override
         public Map<Long, List<Map<Long, Integer>>> call() throws Exception {
-            File fileName = new File(indexPath + File.separator + key);
+            File fileName = Paths.get(indexPath, key).toFile();
             if (!fileName.exists()) {
                 fatal("File index for %s %s does not exists!! ", indexPath, key);
                 return null;
