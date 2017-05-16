@@ -18,6 +18,7 @@
 package eu.unitn.disi.db.grava.vectorization;
 
 import eu.unitn.disi.db.mutilities.LoggableObject;
+import eu.unitn.disi.db.mutilities.ThreadUtilities;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -479,9 +480,11 @@ public class TablesIndex extends LoggableObject {
             }
         } catch (ExecutionException | InterruptedException ex) {
             fatal("Could not load index file - Corrupted Index", ex);
+        } finally {
+            ThreadUtilities.shutdownAndAwaitTermination(loaderPool);
         }
-        loaderPool.shutdownNow();
-        loaderPool = null;
+        //loaderPool.shutdownNow();
+        //loaderPool = null;
         return tables;
 
     }

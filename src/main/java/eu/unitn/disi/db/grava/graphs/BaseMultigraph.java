@@ -17,6 +17,7 @@
  */
 package eu.unitn.disi.db.grava.graphs;
 
+import eu.unitn.disi.db.mutilities.ThreadUtilities;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -307,6 +308,8 @@ public class BaseMultigraph implements Multigraph {
                 }
             } catch (InterruptedException ex) {
                 throw new ExecutionException(ex);
+            } finally {
+                ThreadUtilities.shutdownAndAwaitTermination(pool);
             }
         } else {
             EdgeContainer ec, sec;
