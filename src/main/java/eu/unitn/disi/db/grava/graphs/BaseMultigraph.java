@@ -458,6 +458,11 @@ public class BaseMultigraph implements Multigraph {
     }
 
     @Override
+    public Iterator<Edge> edgesIterator(){
+        return this.edges.iterator();
+    }
+    
+    @Override
     public Iterator<Edge> labeledEdgesIteratorOf(Long label) throws NullPointerException {
         if (label == null) {
             throw new NullPointerException("Label cannot be null");

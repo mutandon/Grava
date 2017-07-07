@@ -214,6 +214,15 @@ public interface Multigraph extends Iterable<Long> {
      */
     public Iterator<Edge> outgoingEdgesIteratorOf(Long vertex) throws NullPointerException;
 
+    
+    /**
+     * Returns an iterator over all edges.
+     *
+     * @return a in iterator of all edges    
+     */
+    public Iterator<Edge> edgesIterator();
+    
+    
     /**
      * Returns an iterator over all edges with a specific label.
      *

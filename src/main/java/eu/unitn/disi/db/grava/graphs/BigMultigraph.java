@@ -453,6 +453,11 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
         return new EdgeIterator(start, length, outEdges,false);
     }
     
+    @Override
+    public Iterator<Edge> edgesIterator() {
+        return new EdgeIterator(0, outEdges.length, outEdges,false);
+    }
+
     
     
     @Override
