@@ -227,7 +227,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
                             }
                             delimiter = '\t';
                         }
-                        info("\nRecognized separator token '%c'\n", delimiter);
+                        info("Recognized separator token '%c'\n", delimiter);
                         break;
                     }
                 }
