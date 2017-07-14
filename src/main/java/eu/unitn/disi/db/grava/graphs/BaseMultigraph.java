@@ -291,16 +291,22 @@ public class BaseMultigraph implements Multigraph {
      * @throws NullPointerException if the input graph is null
      * @throws ExecutionException if something happens in the merge phase
      */
-    @Override
-    public BaseMultigraph merge(BaseMultigraph graph)
+    public Multigraph parallelMerge(Multigraph graph)
             throws ExecutionException,
             NullPointerException {
+        
+        if(!(graph instanceof BaseMultigraph)){
+            throw new IllegalArgumentException("Cannot convert to BaseMultigraph");
+        }
+        
+        BaseMultigraph toMerge = (BaseMultigraph)graph;
+        
         if (nodeEdges.keySet().size() > MIN_SIZE_PARALLELIZATION) {
             ExecutorService pool = Executors.newFixedThreadPool(3);
             List<Future> tasks = new ArrayList<>();
-            tasks.add(pool.submit(new AddToMap(graph)));
+            tasks.add(pool.submit(new AddToMap(toMerge)));
             //tasks.add(pool.submit(new AddToCollection(vertices, graph)));
-            tasks.add(pool.submit(new AddToCollection(edges, graph)));
+            tasks.add(pool.submit(new AddToCollection(edges, toMerge)));
 
             try {
                 for (Future task : tasks) {
@@ -313,7 +319,7 @@ public class BaseMultigraph implements Multigraph {
             }
         } else {
             EdgeContainer ec, sec;
-            Map<Long, EdgeContainer> sourceEdges = graph.nodeEdges;
+            Map<Long, EdgeContainer> sourceEdges = toMerge.nodeEdges;
             Set<Long> vset = sourceEdges.keySet();
             for (Long v : vset) {
                 ec = nodeEdges.get(v);
@@ -326,7 +332,7 @@ public class BaseMultigraph implements Multigraph {
                 nodeEdges.put(v, ec);
             }
             //vertices.addAll(graph.vertices);
-            edges.addAll(graph.edges);
+            edges.addAll(toMerge.edges);
         }
         return this;
     }
@@ -338,6 +344,7 @@ public class BaseMultigraph implements Multigraph {
      * @return this graph
      * @throws NullPointerException if the input graph is null
      */
+    @Override
     public BaseMultigraph merge(Multigraph graph) {
         for (Edge e : graph.edgeSet()) {
             this.forceAddEdge(e);

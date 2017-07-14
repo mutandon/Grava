@@ -252,10 +252,9 @@ public interface Multigraph extends Iterable<Long> {
      *
      * @param graph The input graph to be merged to this
      * @return this graph
-     * @throws NullPointerException if the input graph is null
-     * @throws ExecutionException if something happens in the merge phase
+     * @throws NullPointerException if the input graph is null     
      */
-    public BaseMultigraph merge(BaseMultigraph graph) throws NullPointerException, ExecutionException;
+    public Multigraph merge(Multigraph graph) throws NullPointerException;
 
     /**
      * Check if the input vertex is contained in the Multigraph

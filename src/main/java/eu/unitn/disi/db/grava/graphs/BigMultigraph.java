@@ -543,7 +543,7 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
     }
 
     @Override
-    public BaseMultigraph merge(BaseMultigraph graph) throws NullPointerException, ExecutionException {
+    public Multigraph merge(Multigraph graph) throws NullPointerException {
         throw new UnsupportedOperationException("This graph is immutable, this operation is not allowed.");
     }
 
