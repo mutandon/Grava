@@ -118,6 +118,24 @@ public class TablesIndex extends LoggableObject {
         //debug("Instantiated Table in %s with K:%s and KeyfileSize:%s", path, k, keyFileSize);
     }
 
+    public int getK() {
+        return k;
+    }
+
+    public String getIndexPath() {
+        return indexPath;
+    }
+
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public int getKeyFileNameSize() {
+        return keyFileNameSize;
+    }
+
+    
+    
     /**
      * Computes the hashing value for the long node TODO: IMPROVE HASHING
      * FUNCTION
