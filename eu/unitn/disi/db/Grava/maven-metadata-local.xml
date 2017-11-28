@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>eu.unitn.disi.db</groupId>
+  <artifactId>Grava</artifactId>
+  <versioning>
+    <release>2.2-alpha</release>
+    <versions>
+      <version>2.2-alpha</version>
+    </versions>
+    <lastUpdated>20171128114524</lastUpdated>
+  </versioning>
+</metadata>
