@@ -173,4 +173,12 @@ public class MemoryNeighborTables extends NeighborTables {
         }
         return sb.toString();
     }
+    
+    /**
+     * Apparent size
+     * @return  number of nodes for which we have tables stored
+     */
+    public int size(){
+        return levelTables.size();
+    }
 }
