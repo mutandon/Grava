@@ -147,7 +147,20 @@ public class BaseMultigraph implements Multigraph {
      */
     public void forceAddEdge(Long src, Long dest, Long label) throws NullPointerException {
         Edge e = new Edge(src, dest, label);
-        if (edges.contains(e)) {
+        forceAddEdge(e);
+    }
+
+    /**
+     * Add an edge to the graph. If either source or destination nodes do not
+     * exist, it calls {@link #addVertex(java.lang.Long) }.
+     *
+     * @param edge
+     */
+    public void forceAddEdge(Edge edge) throws NullPointerException {
+        long src = edge.getSource();
+        long dest = edge.getDestination();
+        
+        if (edges.contains(edge)) {
             return;
         }
 
@@ -162,20 +175,10 @@ public class BaseMultigraph implements Multigraph {
 
         }
 
-        if (srcC.addOutgoingEdge(e)) {
-            edges.add(e);
-            dstC.addIncomingEdge(e);
+        if (srcC.addOutgoingEdge(edge)) {
+            edges.add(edge);
+            dstC.addIncomingEdge(edge);
         }
-    }
-
-    /**
-     * Add an edge to the graph. If either source or destination nodes do not
-     * exist, it calls {@link #addVertex(java.lang.Long) }.
-     *
-     * @param edge
-     */
-    public void forceAddEdge(Edge edge) throws NullPointerException {
-        forceAddEdge(edge.getSource(), edge.getDestination(), edge.getLabel());
     }
 
     /**

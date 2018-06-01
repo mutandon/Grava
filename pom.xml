@@ -4,7 +4,7 @@
 
     <groupId>eu.unitn.disi.db</groupId>
     <artifactId>Grava</artifactId>
-    <version>2.2-alpha</version>
+    <version>2.2</version>
     <packaging>jar</packaging>
 
     <name>Grava</name>
