@@ -556,12 +556,37 @@ public class BigMultigraph extends LoggableObject implements Multigraph, Iterabl
     
     @Override
     public Collection<Edge> getEdge(Long src, Long dest) throws NullPointerException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if(!containsVertex(src) || !containsVertex(dest)){
+            return new HashSet<>(1);
+        }
+        Iterator<Edge> eit = this.outgoingEdgesIteratorOf(src);
+        Set<Edge> out = new HashSet<>();
+        Edge e;
+        while(eit.hasNext()){
+            e= eit.next();
+            if(e.getDestination().equals(dest)){
+                out.add(e);
+            }
+        }
+        return out;
     }
 
     @Override
-    public boolean containsEdge(Long sourceVertex, Long targetVertex) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public boolean containsEdge(Long src, Long dest) {
+        if(!containsVertex(src) || !containsVertex(dest)){
+            return false;
+        }
+        
+        Iterator<Edge> eit = this.outgoingEdgesIteratorOf(src);
+        
+        Edge e;
+        while(eit.hasNext()){
+            e= eit.next();
+            if(e.getDestination().equals(dest)){
+                return true;
+            }
+        }
+        return false;
     }
     
     @Override
